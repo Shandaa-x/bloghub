@@ -18,7 +18,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
-  bool _isGridView = true;
   bool _isRefreshing = false;
   bool _isLoading = true;
   String _selectedCategory = 'All';
@@ -44,6 +43,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _fetchBlogPosts();
   }
 
+  String _parseDate(dynamic value) {
+    if (value == null) return '';
+    if (value is Timestamp) return value.toDate().toIso8601String();
+    if (value is String) return value;
+    return '';
+  }
+
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -67,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           'id': doc.id,
           'title': data['title'],
           'author': data['author'],
-          'publishDate': (data['publishDate'] as Timestamp?)?.toDate().toIso8601String() ?? '',
+          'publishDate': _parseDate(data['publishDate']),
           'readingTime': data['readingTime'] ?? '',
           'category': data['category'] ?? '',
           'imageUrl': data['imageUrl'] ?? '',
@@ -293,60 +300,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          type: BottomNavigationBarType.fixed,
-          onTap: (index) {
-            setState(() => _currentIndex = index);
-            if (index == 3) Navigator.pushNamed(context, '/profile-screen');
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: CustomIconWidget(iconName: 'home', color: _navColor(0), size: 24),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: CustomIconWidget(iconName: 'search', color: _navColor(1), size: 24),
-              label: 'Search',
-            ),
-            BottomNavigationBarItem(
-              icon: CustomIconWidget(iconName: 'bookmark', color: _navColor(2), size: 24),
-              label: 'Bookmarks',
-            ),
-            BottomNavigationBarItem(
-              icon: CustomIconWidget(iconName: 'person', color: _navColor(3), size: 24),
-              label: 'Profile',
-            ),
-          ],
-        ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.addBlogScreen),
           child: CustomIconWidget(iconName: 'filter_list', color: Theme.of(context).colorScheme.onPrimary, size: 24),
         ),
       ),
-    );
-  }
-
-  Color _navColor(int index) {
-    return _currentIndex == index
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
-  }
-
-  Widget _buildListView() {
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-      itemCount: _filteredPosts.length,
-      itemBuilder: (context, index) {
-        final post = _filteredPosts[index];
-        return BlogPostCardWidget(
-          post: post,
-          isGridView: false,
-          onTap: () {},
-          onLongPress: () => _showQuickActions(context, post),
-          onBookmarkTap: () => _toggleBookmark(post['id']),
-        );
-      },
     );
   }
 
@@ -356,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 0.55,
-        crossAxisSpacing: 3.w,
+        crossAxisSpacing: 1.w,
         mainAxisSpacing: 2.h,
       ),
       itemCount: _filteredPosts.length,

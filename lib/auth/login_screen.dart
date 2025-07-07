@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _passwordController.clear();
 
           // Navigate to home screen
-          Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+          Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
         }
       } on FirebaseAuthException catch (e) {
         setState(() {

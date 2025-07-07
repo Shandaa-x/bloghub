@@ -32,8 +32,7 @@ class BlogPostCardWidget extends StatelessWidget {
           children: [
             // Featured Image
             ClipRRect(
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: Stack(
                 children: [
                   CustomImageWidget(
@@ -50,19 +49,12 @@ class BlogPostCardWidget extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.all(1.w),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surface
-                              .withOpacity(0.9),
+                          color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
                           shape: BoxShape.circle,
                         ),
                         child: CustomIconWidget(
-                          iconName: (post['isBookmarked'] as bool)
-                              ? 'bookmark'
-                              : 'bookmark_border',
-                          color: (post['isBookmarked'] as bool)
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.onSurface,
+                          iconName: (post['isBookmarked'] as bool) ? 'bookmark' : 'bookmark_border',
+                          color: (post['isBookmarked'] as bool) ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                           size: 20,
                         ),
                       ),
@@ -86,21 +78,17 @@ class BlogPostCardWidget extends StatelessWidget {
                       children: [
                         // Category badge
                         Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 2.w, vertical: 0.5.h),
+                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             post['category'] as String,
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ),
 
@@ -109,11 +97,10 @@ class BlogPostCardWidget extends StatelessWidget {
                         // Title
                         Text(
                           post['title'] as String,
-                          style:
-                          Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
                           maxLines: 2, // Limiting to 2 lines for both views
                           overflow: TextOverflow.ellipsis, // Added ellipsis for overflow
                         ),
@@ -125,11 +112,8 @@ class BlogPostCardWidget extends StatelessWidget {
                           Text(
                             post['excerpt'] as String,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.7),
-                            ),
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -147,54 +131,45 @@ class BlogPostCardWidget extends StatelessWidget {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  post['author'] as String,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelMedium
-                                      ?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 10,
+                                      child: Image.network(
+                                        'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg',
+                                        // width: 10,
+                                      ),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      post['author'] as String,
+                                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                                 SizedBox(height: 0.5.h),
                                 Row(
                                   children: [
                                     Text(
                                       post['publishDate'] as String,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
                                     ),
                                     Text(
                                       ' • ',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
                                     ),
                                     Text(
                                       post['readingTime'] as String,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withOpacity(0.6),
-                                      ),
+                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -209,54 +184,33 @@ class BlogPostCardWidget extends StatelessWidget {
                           children: [
                             CustomIconWidget(
                               iconName: 'favorite_border',
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               size: 16,
                             ),
                             SizedBox(width: 1.w),
                             Text(
                               '${post['likes']}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.6),
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
                             ),
                             SizedBox(width: 4.w),
                             CustomIconWidget(
                               iconName: 'chat_bubble_outline',
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               size: 16,
                             ),
                             SizedBox(width: 1.w),
                             Text(
                               '${post['comments']}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.6),
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                  ),
                             ),
                             const Spacer(),
                             CustomIconWidget(
                               iconName: 'share',
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                               size: 16,
                             ),
                           ],

@@ -80,7 +80,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -535,64 +534,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (index) {
-        setState(() => _currentIndex = index);
-        switch (index) {
-          case 0:
-            Navigator.pushReplacementNamed(context, '/home-screen');
-            break;
-          case 1:
-            Navigator.pushReplacementNamed(context, '/categories-screen');
-            break;
-          case 2:
-            // Already on profile screen
-            break;
-        }
-      },
-      items: [
-        BottomNavigationBarItem(
-          icon: CustomIconWidget(
-            iconName: 'home',
-            color: _currentIndex == 0
-                ? Theme.of(context).bottomNavigationBarTheme.selectedItemColor!
-                : Theme.of(context)
-                    .bottomNavigationBarTheme
-                    .unselectedItemColor!,
-            size: 24,
-          ),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: CustomIconWidget(
-            iconName: 'category',
-            color: _currentIndex == 1
-                ? Theme.of(context).bottomNavigationBarTheme.selectedItemColor!
-                : Theme.of(context)
-                    .bottomNavigationBarTheme
-                    .unselectedItemColor!,
-            size: 24,
-          ),
-          label: 'Categories',
-        ),
-        BottomNavigationBarItem(
-          icon: CustomIconWidget(
-            iconName: 'person',
-            color: _currentIndex == 2
-                ? Theme.of(context).bottomNavigationBarTheme.selectedItemColor!
-                : Theme.of(context)
-                    .bottomNavigationBarTheme
-                    .unselectedItemColor!,
-            size: 24,
-          ),
-          label: 'Profile',
-        ),
-      ],
     );
   }
 

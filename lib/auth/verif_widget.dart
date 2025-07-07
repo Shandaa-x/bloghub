@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../routes/app_routes.dart';
+
 class UserDataVerificationWidget extends StatelessWidget {
   final String userId;
 
@@ -134,7 +136,7 @@ class UserDataVerificationWidget extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/home-screen');
+                      Navigator.pushNamed(context, AppRoutes.bottomNav);
                     },
                     child: Text('Continue to App'),
                   ),

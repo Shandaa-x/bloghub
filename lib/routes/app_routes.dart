@@ -1,5 +1,6 @@
 import 'package:bloghub/auth/login_screen.dart';
 import 'package:bloghub/presentation/add_blog_screen/add_blog_screen.dart';
+import 'package:bloghub/presentation/bottom_nav/bottom_nav.dart';
 import 'package:flutter/material.dart';
 import '../auth/register_screen.dart';
 import '../presentation/home_screen/home_screen.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
   static const String profileScreen = '/profile-screen';
   static const String registerScreen = '/register-screen';
   static const String addBlogScreen = '/add-blog-screen';
+  static const String bottomNav = '/bottom-nav';
 
   static Map<String, WidgetBuilder> routes = {
     initial: (context) => const LoginScreen(),
@@ -22,6 +24,7 @@ class AppRoutes {
     profileScreen: (context) => const ProfileScreen(),
     registerScreen: (context) => const RegisterScreen(),
     addBlogScreen: (context) => const AddBlogScreen(),
+    bottomNav: (context) => const BottomNav(),
     // TODO: Add your other routes here
   };
 }
