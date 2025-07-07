@@ -10,16 +10,16 @@ plugins {
 
 android {
     namespace = "com.bloghub.app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35  // Updated to fix plugin warnings
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11  // Updated from VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_11  // Updated from VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = JavaVersion.VERSION_11  // Updated from VERSION_1_8
     }
 
     defaultConfig {
@@ -27,7 +27,7 @@ android {
         applicationId = "com.bloghub.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23  // CHANGED: Updated from flutter.minSdkVersion to 23 (required for Firebase Auth)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -49,4 +49,9 @@ flutter {
 
 dependencies {
     implementation "androidx.multidex:multidex:2.0.1"
+    // Add Firebase dependencies with updated BOM
+    implementation platform('com.google.firebase:firebase-bom:32.8.0')  // Updated BOM version
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
 }

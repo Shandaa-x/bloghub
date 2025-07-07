@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// Assuming app_export.dart provides CustomIconWidget and other common utilities
 import '../../core/app_export.dart';
-import '../../widgets/custom_icon_widget.dart'; // Explicitly import if not re-exported by app_export.dart
+import '../../widgets/custom_icon_widget.dart';
+import '../services/auth_services.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,6 +25,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Auth service instance
+  final AuthService _authService = AuthService();
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -37,31 +41,65 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
-        _errorMessage = null; // Clear previous errors
+        _errorMessage = null;
       });
 
-      // Simulate API call or registration process
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        await _authService.registerWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          fullName: _fullNameController.text.trim(),
+        );
 
-      // Example: Basic validation (replace with actual registration logic)
-      if (_passwordController.text != _confirmPasswordController.text) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Registration successful! Please check your email for verification.'),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: 'OK',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+
+          // Navigate to login screen
+          Navigator.pushReplacementNamed(context, '/login-screen');
+        }
+      } on FirebaseAuthException catch (e) {
         setState(() {
-          _errorMessage = 'Passwords do not match.';
+          _errorMessage = _getErrorMessage(e.code);
         });
-      } else if (_emailController.text == 'existing@example.com') {
+      } catch (e) {
         setState(() {
-          _errorMessage = 'Email already registered.';
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
         });
-      } else {
-        // Registration successful (simulated)
-        print('Registration successful for ${_emailController.text}');
-        // Optionally, navigate to login screen or directly to home
-        Navigator.pushReplacementNamed(context, '/home-screen');
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
+    }
+  }
 
-      setState(() {
-        _isLoading = false;
-      });
+  String _getErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'weak-password':
+        return 'The password provided is too weak.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'operation-not-allowed':
+        return 'Email/password accounts are not enabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Network error. Please check your connection.';
+      default:
+        return 'Registration failed. Please try again.';
     }
   }
 
@@ -71,7 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: CustomIconWidget(
-            iconName: 'arrow_back', // Assuming you have an arrow_back icon
+            iconName: 'arrow_back',
             color: Theme.of(context).colorScheme.onBackground,
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -119,11 +157,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _fullNameController,
                   keyboardType: TextInputType.name,
+                  textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(
                     labelText: 'Full Name',
                     hintText: 'Enter your full name',
                     prefixIcon: CustomIconWidget(
-                      iconName: 'person_outline', // Assuming person_outline icon
+                      iconName: 'person_outline',
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     ),
                     border: OutlineInputBorder(
@@ -135,8 +174,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     contentPadding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your full name';
+                    }
+                    if (value.trim().length < 2) {
+                      return 'Name must be at least 2 characters long';
                     }
                     return null;
                   },
@@ -149,6 +191,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
                   decoration: InputDecoration(
                     labelText: 'Email Address',
                     hintText: 'Enter your email',
@@ -165,10 +208,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     contentPadding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
                       return 'Please enter a valid email address';
                     }
                     return null;
@@ -212,8 +255,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a password';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters long';
+                    if (value.length < 8) {
+                      return 'Password must be at least 8 characters long';
+                    }
+                    if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+                      return 'Password must contain uppercase, lowercase, and numbers';
                     }
                     return null;
                   },
@@ -270,12 +316,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 if (_errorMessage != null)
                   Padding(
                     padding: EdgeInsets.only(bottom: 2.h),
-                    child: Text(
-                      _errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
+                    child: Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(2.h),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Theme.of(context).colorScheme.error,
+                            size: 20,
+                          ),
+                          SizedBox(width: 2.w),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -284,11 +352,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
+                    disabledBackgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
-                    minimumSize: Size(double.infinity, 6.h), // Ensure button fills width
+                    minimumSize: Size(double.infinity, 6.h),
+                    elevation: 0,
                   ),
                   child: _isLoading
                       ? SizedBox(
@@ -300,7 +370,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   )
                       : Text(
-                    'Register',
+                    'Create Account',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
@@ -308,7 +378,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
 
-                SizedBox(height: 4.h),
+                SizedBox(height: 3.h),
+
+                // Terms and Privacy Policy
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  child: Text(
+                    'By creating an account, you agree to our Terms of Service and Privacy Policy.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                SizedBox(height: 3.h),
 
                 // Already have an account? Login
                 Row(
@@ -321,9 +405,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        print('Login tapped');
-                        Navigator.pop(context); // Go back to login screen
+                      onPressed: _isLoading ? null : () {
+                        Navigator.pop(context);
                       },
                       child: Text(
                         'Login',
@@ -335,6 +418,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
+
+                SizedBox(height: 2.h),
               ],
             ),
           ),

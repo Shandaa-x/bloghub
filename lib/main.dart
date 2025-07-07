@@ -9,9 +9,9 @@ import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform, // 👈 үүнийг нэм
-  );
+
+  // Initialize Firebase and test connection
+  await initializeFirebase();
 
   // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -19,12 +19,50 @@ void main() async {
       errorDetails: details,
     );
   };
+
   // 🚨 CRITICAL: Device orientation lock - DO NOT REMOVE
   Future.wait([
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
   ]).then((value) {
     runApp(MyApp());
   });
+}
+
+/// Initialize Firebase and test the connection
+Future<void> initializeFirebase() async {
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await testFirebaseConnection();
+  } catch (e) {
+    print("❌ Firebase initialization failed: $e");
+    // You can add more error handling here if needed
+  }
+}
+
+/// Test Firebase connection
+Future<void> testFirebaseConnection() async {
+  try {
+    // Check if Firebase is initialized
+    if (Firebase.apps.isNotEmpty) {
+      print("✅ Firebase connected successfully!");
+      print("📱 App name: ${Firebase.app().name}");
+      print("🔗 Project ID: ${Firebase.app().options.projectId}");
+
+      // Optional: Test Firestore connection
+      // Note: This will only work if you have proper Firestore rules set up
+      // await FirebaseFirestore.instance.enableNetwork();
+      // print("✅ Firestore connection successful!");
+
+    } else {
+      print("❌ Firebase apps list is empty");
+    }
+  } catch (e) {
+    print("❌ Firebase connection test failed: $e");
+    // Log the specific error for debugging
+    debugPrint("Firebase connection error details: $e");
+  }
 }
 
 class MyApp extends StatelessWidget {

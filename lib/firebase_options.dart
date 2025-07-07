@@ -65,4 +65,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'bloghub-26fe1.firebasestorage.app',
     iosBundleId: 'com.bloghub.app.testProject',
   );
+
 }
