@@ -128,7 +128,7 @@ class AppTheme {
     ),
 
     // Adaptive Card Layouts - Flexible containers with subtle elevation
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: surfaceLight,
       elevation: 2,
       shadowColor: shadowLight,
@@ -316,7 +316,7 @@ class AppTheme {
     ),
 
     // Tab navigation for content categories
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: primaryLight,
       unselectedLabelColor: textMediumEmphasisLight,
       indicatorColor: primaryLight,
@@ -423,7 +423,7 @@ class AppTheme {
         color: textMediumEmphasisDark,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: surfaceDark,
       elevation: 2,
       shadowColor: shadowDark,
@@ -590,7 +590,7 @@ class AppTheme {
       inactiveTrackColor: borderDark,
       trackHeight: 4,
     ),
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: primaryDark,
       unselectedLabelColor: textMediumEmphasisDark,
       indicatorColor: primaryDark,

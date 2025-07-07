@@ -28,12 +28,12 @@ class BlogPostCardWidget extends StatelessWidget {
         elevation: 2,
         margin: EdgeInsets.only(bottom: isGridView ? 0 : 2.h),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Featured Image
             ClipRRect(
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(12)),
+              const BorderRadius.vertical(top: Radius.circular(12)),
               child: Stack(
                 children: [
                   CustomImageWidget(
@@ -53,7 +53,7 @@ class BlogPostCardWidget extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .surface
-                              .withValues(alpha: 0.9),
+                              .withOpacity(0.9),
                           shape: BoxShape.circle,
                         ),
                         child: CustomIconWidget(
@@ -75,177 +75,191 @@ class BlogPostCardWidget extends StatelessWidget {
             // Content
             Expanded(
               child: Padding(
-                padding: EdgeInsets.all(3.w),
+                padding: EdgeInsets.all(2.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Added this to distribute space
                   children: [
-                    // Category badge
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 2.w, vertical: 0.5.h),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        post['category'] as String,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    // Top content: Category, Title, Excerpt
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Category badge
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 2.w, vertical: 0.5.h),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            post['category'] as String,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w500,
                             ),
-                      ),
-                    ),
-
-                    SizedBox(height: 1.h),
-
-                    // Title
-                    Text(
-                      post['title'] as String,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
                           ),
-                      maxLines: isGridView ? 3 : 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                        ),
 
-                    if (!isGridView) ...[
-                      SizedBox(height: 1.h),
+                        SizedBox(height: 1.h),
 
-                      // Excerpt
-                      Text(
-                        post['excerpt'] as String,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        // Title
+                        Text(
+                          post['title'] as String,
+                          style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                          maxLines: 2, // Limiting to 2 lines for both views
+                          overflow: TextOverflow.ellipsis, // Added ellipsis for overflow
+                        ),
+
+                        if (!isGridView) ...[
+                          SizedBox(height: 1.h),
+
+                          // Excerpt
+                          Text(
+                            post['excerpt'] as String,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurface
-                                  .withValues(alpha: 0.7),
+                                  .withOpacity(0.7),
                             ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-
-                    const Spacer(),
-
-                    // Author and meta info
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                post['author'] as String,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 0.5.h),
-                              Row(
-                                children: [
-                                  Text(
-                                    post['publishDate'] as String,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                  ),
-                                  Text(
-                                    ' • ',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                  ),
-                                  Text(
-                                    post['readingTime'] as String,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
+                        ],
                       ],
                     ),
 
-                    SizedBox(height: 1.h),
-
-                    // Engagement indicators
-                    Row(
+                    // Bottom content: Author, meta info, and Engagement indicators
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CustomIconWidget(
-                          iconName: 'favorite_border',
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.6),
-                          size: 16,
-                        ),
-                        SizedBox(width: 1.w),
-                        Text(
-                          '${post['likes']}',
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.6),
+                        // Author and meta info
+                        Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  post['author'] as String,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelMedium
+                                      ?.copyWith(
+                                    fontWeight: FontWeight.w500,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 0.5.h),
+                                Row(
+                                  children: [
+                                    Text(
+                                      post['publishDate'] as String,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                    ),
+                                    Text(
+                                      ' • ',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                    ),
+                                    Text(
+                                      post['readingTime'] as String,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withOpacity(0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 4.w),
-                        CustomIconWidget(
-                          iconName: 'chat_bubble_outline',
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.6),
-                          size: 16,
-                        ),
-                        SizedBox(width: 1.w),
-                        Text(
-                          '${post['comments']}',
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
-                        ),
-                        const Spacer(),
-                        CustomIconWidget(
-                          iconName: 'share',
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.6),
-                          size: 16,
+                        SizedBox(height: 1.h), // Added small space between author and engagement
+
+                        // Engagement indicators
+                        Row(
+                          children: [
+                            CustomIconWidget(
+                              iconName: 'favorite_border',
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.6),
+                              size: 16,
+                            ),
+                            SizedBox(width: 1.w),
+                            Text(
+                              '${post['likes']}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.6),
+                              ),
+                            ),
+                            SizedBox(width: 4.w),
+                            CustomIconWidget(
+                              iconName: 'chat_bubble_outline',
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.6),
+                              size: 16,
+                            ),
+                            SizedBox(width: 1.w),
+                            Text(
+                              '${post['comments']}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.6),
+                              ),
+                            ),
+                            const Spacer(),
+                            CustomIconWidget(
+                              iconName: 'share',
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.6),
+                              size: 16,
+                            ),
+                          ],
                         ),
                       ],
                     ),

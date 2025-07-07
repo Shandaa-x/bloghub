@@ -522,14 +522,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             CustomIconWidget(
               iconName: 'logout',
-              color: Theme.of(context).colorScheme.onError,
+              color: Colors.red,
               size: 20,
             ),
             SizedBox(width: 2.w),
             Text(
               "Logout",
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onError,
+                    color: Colors.red,
                   ),
             ),
           ],

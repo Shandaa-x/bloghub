@@ -29,9 +29,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "readingTime": "5 min read",
       "category": "Technology",
       "imageUrl":
-          "https://images.unsplash.com/photo-1555066931-4365d14bab8c?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
       "excerpt":
-          "Exploring the latest trends in cross-platform mobile development and what developers should know.",
+      "Exploring the latest trends in cross-platform mobile development and what developers should know.",
       "likes": 124,
       "comments": 23,
       "isBookmarked": false,
@@ -44,9 +44,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "readingTime": "7 min read",
       "category": "Lifestyle",
       "imageUrl":
-          "https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "excerpt":
-          "Discover simple ways to reduce your environmental footprint and live more sustainably.",
+      "Discover simple ways to reduce your environmental footprint and live more sustainably.",
       "likes": 89,
       "comments": 15,
       "isBookmarked": true,
@@ -59,9 +59,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "readingTime": "6 min read",
       "category": "Design",
       "imageUrl":
-          "https://images.pixabay.com/photo/2016/11/29/03/53/architecture-1867187_1280.jpg",
+      "https://images.pixabay.com/photo/2016/11/29/03/53/architecture-1867187_1280.jpg",
       "excerpt":
-          "How minimalism is shaping contemporary architectural practices and urban planning.",
+      "How minimalism is shaping contemporary architectural practices and urban planning.",
       "likes": 156,
       "comments": 31,
       "isBookmarked": false,
@@ -74,9 +74,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "readingTime": "8 min read",
       "category": "Business",
       "imageUrl":
-          "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
+      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
       "excerpt":
-          "Essential strategies for maintaining productivity while working from anywhere in the world.",
+      "Essential strategies for maintaining productivity while working from anywhere in the world.",
       "likes": 203,
       "comments": 45,
       "isBookmarked": true,
@@ -89,9 +89,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "readingTime": "10 min read",
       "category": "Health",
       "imageUrl":
-          "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+      "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
       "excerpt":
-          "Research-backed insights into how mindfulness practices can improve mental well-being.",
+      "Research-backed insights into how mindfulness practices can improve mental well-being.",
       "likes": 178,
       "comments": 28,
       "isBookmarked": false,
@@ -104,9 +104,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       "readingTime": "9 min read",
       "category": "Finance",
       "imageUrl":
-          "https://images.pixabay.com/photo/2017/12/12/12/44/bitcoin-3014614_1280.jpg",
+      "https://images.pixabay.com/photo/2017/12/12/12/44/bitcoin-3014614_1280.jpg",
       "excerpt":
-          "An analysis of emerging cryptocurrency trends and their potential market impact.",
+      "An analysis of emerging cryptocurrency trends and their potential market impact.",
       "likes": 267,
       "comments": 52,
       "isBookmarked": false,
@@ -162,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final postIndex = _blogPosts.indexWhere((post) => post['id'] == postId);
       if (postIndex != -1) {
         _blogPosts[postIndex]['isBookmarked'] =
-            !_blogPosts[postIndex]['isBookmarked'];
+        !_blogPosts[postIndex]['isBookmarked'];
       }
     });
   }
@@ -264,24 +264,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   Text(
                     'BlogHub',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                   const Spacer(),
                   // View toggle
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _isGridView = !_isGridView;
-                      });
-                    },
-                    icon: CustomIconWidget(
-                      iconName: _isGridView ? 'view_list' : 'grid_view',
-                      color: Theme.of(context).colorScheme.onSurface,
-                      size: 24,
-                    ),
-                  ),
+                  // IconButton(
+                  //   onPressed: () {
+                  //     setState(() {
+                  //       _isGridView = !_isGridView;
+                  //     });
+                  //   },
+                  //   icon: CustomIconWidget(
+                  //     iconName: _isGridView ? 'view_list' : 'grid_view',
+                  //     color: Theme.of(context).colorScheme.onSurface,
+                  //     size: 24,
+                  //   ),
+                  // ),
                   // Theme toggle
                   IconButton(
                     onPressed: () {
@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             // Category chips
             Container(
               height: 6.h,
-              padding: EdgeInsets.symmetric(vertical: 1.h),
+              padding: EdgeInsets.symmetric(vertical: 6),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: EdgeInsets.symmetric(horizontal: 4.w),
@@ -334,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _handleRefresh,
-                child: _isGridView ? _buildGridView() : _buildListView(),
+                child: _buildGridView(),
               ),
             ),
           ],
@@ -350,13 +350,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           switch (index) {
             case 0:
-              // Already on home
+            // Already on home
               break;
             case 1:
-              // Navigate to search (not implemented)
+            // Navigate to search (not implemented)
               break;
             case 2:
-              // Navigate to bookmarks (not implemented)
+            // Navigate to bookmarks (not implemented)
               break;
             case 3:
               Navigator.pushNamed(context, '/profile-screen');
@@ -370,9 +370,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: _currentIndex == 0
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.6),
               size: 24,
             ),
             label: 'Home',
@@ -383,9 +383,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: _currentIndex == 1
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.6),
               size: 24,
             ),
             label: 'Search',
@@ -396,9 +396,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: _currentIndex == 2
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.6),
               size: 24,
             ),
             label: 'Bookmarks',
@@ -409,9 +409,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               color: _currentIndex == 3
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.6),
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.6),
               size: 24,
             ),
             label: 'Profile',
@@ -456,10 +456,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildGridView() {
     return GridView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.75,
+        childAspectRatio: 0.55, // Adjusted from 0.75 to make items taller and fit content
         crossAxisSpacing: 3.w,
         mainAxisSpacing: 2.h,
       ),

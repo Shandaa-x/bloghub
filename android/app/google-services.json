@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "733205618226",
+    "project_id": "bloghub-26fe1",
+    "storage_bucket": "bloghub-26fe1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733205618226:android:c55280380615f5bffc662b",
+        "android_client_info": {
+          "package_name": "com.bloghub.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApu-MdfnxdVA9ZG67PQuXhjRipmUNkxEg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

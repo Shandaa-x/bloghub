@@ -35,7 +35,7 @@ class ReadingStatsWidget extends StatelessWidget {
             physics: NeverScrollableScrollPhysics(),
             crossAxisSpacing: 3.w,
             mainAxisSpacing: 2.h,
-            childAspectRatio: 1.3,
+            childAspectRatio: 1.2,
             children: [
               _buildStatCard(
                 context,
