@@ -1,84 +1,79 @@
+// Update your lib/widgets/custom_error_widget.dart
+
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-
-import '../core/app_export.dart';
-
-// custom_error_widget.dart
 
 class CustomErrorWidget extends StatelessWidget {
-  final FlutterErrorDetails? errorDetails;
-  final String? errorMessage;
+  final FlutterErrorDetails errorDetails;
 
   const CustomErrorWidget({
     Key? key,
-    this.errorDetails,
-    this.errorMessage,
+    required this.errorDetails,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      body: SafeArea(
-          child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                'assets/images/sad_face.svg',
-                height: 42,
-                width: 42,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Something went wrong",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF262626),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Material(
+          child: Container(
+            color: Colors.red.shade50,
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 64,
                 ),
-              ),
-              const SizedBox(height: 4),
-              SizedBox(
-                child: const Text(
-                  'We encountered an unexpected error while processing your request.',
+                SizedBox(height: 16),
+                Text(
+                  'Oops! Something went wrong',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red.shade800,
+                  ),
                   textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'We encountered an unexpected error. Please restart the app.',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Color(0xFF525252), // neutral-600
+                    color: Colors.red.shade700,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () {
-                  bool canBeBack = Navigator.canPop(context);
-                  if (canBeBack) {
-                    Navigator.of(context).pop();
-                  } else {
-                    Navigator.pushNamed(context, AppRoutes.initial);
-                  }
-                },
-                icon:
-                    const Icon(Icons.arrow_back, size: 18, color: Colors.white),
-                label: const Text('Back'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.lightTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                SizedBox(height: 16),
+
+                // Only show error details in debug mode
+                if (errorDetails.exception.toString().isNotEmpty) ...[
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade300),
+                    ),
+                    child: Text(
+                      'Error: ${errorDetails.exception.toString()}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.red.shade900,
+                        fontFamily: 'monospace',
+                      ),
+                      textAlign: TextAlign.left,
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              ],
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 }

@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/auth_services.dart';
+import '../../theme/toast_helper.dart';
 import '../../widgets/custom_icon_widget.dart';
 import './widgets/blog_post_card_widget.dart';
 import './widgets/category_chip_widget.dart';
@@ -15,103 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
-  bool _isGridView = false;
+  bool _isGridView = true;
   bool _isRefreshing = false;
+  bool _isLoading = true;
   String _selectedCategory = 'All';
   late TabController _tabController;
+  final AuthService _authService = AuthService();
 
-  final List<Map<String, dynamic>> _blogPosts = [
-    {
-      "id": 1,
-      "title": "The Future of Mobile Development: Flutter vs React Native",
-      "author": "Sarah Johnson",
-      "publishDate": "2024-01-15",
-      "readingTime": "5 min read",
-      "category": "Technology",
-      "imageUrl":
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "excerpt":
-      "Exploring the latest trends in cross-platform mobile development and what developers should know.",
-      "likes": 124,
-      "comments": 23,
-      "isBookmarked": false,
-    },
-    {
-      "id": 2,
-      "title": "Sustainable Living: Small Changes, Big Impact",
-      "author": "Michael Chen",
-      "publishDate": "2024-01-14",
-      "readingTime": "7 min read",
-      "category": "Lifestyle",
-      "imageUrl":
-      "https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "excerpt":
-      "Discover simple ways to reduce your environmental footprint and live more sustainably.",
-      "likes": 89,
-      "comments": 15,
-      "isBookmarked": true,
-    },
-    {
-      "id": 3,
-      "title": "The Art of Minimalist Design in Modern Architecture",
-      "author": "Emma Rodriguez",
-      "publishDate": "2024-01-13",
-      "readingTime": "6 min read",
-      "category": "Design",
-      "imageUrl":
-      "https://images.pixabay.com/photo/2016/11/29/03/53/architecture-1867187_1280.jpg",
-      "excerpt":
-      "How minimalism is shaping contemporary architectural practices and urban planning.",
-      "likes": 156,
-      "comments": 31,
-      "isBookmarked": false,
-    },
-    {
-      "id": 4,
-      "title": "Mastering Remote Work: Productivity Tips for Digital Nomads",
-      "author": "David Kim",
-      "publishDate": "2024-01-12",
-      "readingTime": "8 min read",
-      "category": "Business",
-      "imageUrl":
-      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3",
-      "excerpt":
-      "Essential strategies for maintaining productivity while working from anywhere in the world.",
-      "likes": 203,
-      "comments": 45,
-      "isBookmarked": true,
-    },
-    {
-      "id": 5,
-      "title": "The Science Behind Mindfulness and Mental Health",
-      "author": "Dr. Lisa Thompson",
-      "publishDate": "2024-01-11",
-      "readingTime": "10 min read",
-      "category": "Health",
-      "imageUrl":
-      "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-      "excerpt":
-      "Research-backed insights into how mindfulness practices can improve mental well-being.",
-      "likes": 178,
-      "comments": 28,
-      "isBookmarked": false,
-    },
-    {
-      "id": 6,
-      "title": "Cryptocurrency Trends: What to Watch in 2024",
-      "author": "Alex Martinez",
-      "publishDate": "2024-01-10",
-      "readingTime": "9 min read",
-      "category": "Finance",
-      "imageUrl":
-      "https://images.pixabay.com/photo/2017/12/12/12/44/bitcoin-3014614_1280.jpg",
-      "excerpt":
-      "An analysis of emerging cryptocurrency trends and their potential market impact.",
-      "likes": 267,
-      "comments": 52,
-      "isBookmarked": false,
-    },
-  ];
+  List<Map<String, dynamic>> _blogPosts = [];
 
   final List<String> _categories = [
     'All',
@@ -120,13 +34,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     'Design',
     'Business',
     'Health',
-    'Finance'
+    'Finance',
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _fetchBlogPosts();
   }
 
   @override
@@ -135,34 +50,129 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<void> _fetchBlogPosts() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('blog_posts')
+          .where('isPublished', isEqualTo: true)
+          .get();
+
+      final posts = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          'title': data['title'],
+          'author': data['author'],
+          'publishDate': (data['publishDate'] as Timestamp?)?.toDate().toIso8601String() ?? '',
+          'readingTime': data['readingTime'] ?? '',
+          'category': data['category'] ?? '',
+          'imageUrl': data['imageUrl'] ?? '',
+          'excerpt': data['excerpt'] ?? '',
+          'likes': data['likes'] ?? 0,
+          'comments': data['comments'] ?? 0,
+          'isBookmarked': false,
+        };
+      }).toList();
+
+      setState(() {
+        _blogPosts = posts;
+      });
+    } catch (e) {
+      debugPrint("🔥 Error fetching posts: $e");
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   List<Map<String, dynamic>> get _filteredPosts {
     if (_selectedCategory == 'All') {
       return _blogPosts;
     }
-    return _blogPosts
-        .where((post) => (post['category'] as String) == _selectedCategory)
-        .toList();
+    return _blogPosts.where((post) => post['category'] == _selectedCategory).toList();
   }
 
   Future<void> _handleRefresh() async {
     setState(() {
       _isRefreshing = true;
     });
-
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
-
+    await _fetchBlogPosts();
     setState(() {
       _isRefreshing = false;
     });
   }
 
-  void _toggleBookmark(int postId) {
+  Future<bool> _onWillPop() async {
+    bool shouldSignOut = await _showSignOutDialog();
+    if (shouldSignOut) {
+      await _handleSignOut();
+      return false;
+    }
+    return false;
+  }
+
+  Future<bool> _showSignOutDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.logout, color: Colors.orange, size: 24),
+              SizedBox(width: 8),
+              Text('Sign Out', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            ],
+          ),
+          content: const Text('Are you sure you want to sign out of BlogHub?', style: TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w500)),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ],
+        );
+      },
+    ) ??
+        false;
+  }
+
+  Future<void> _handleSignOut() async {
+    try {
+      await _authService.signOut();
+      if (mounted) {
+        ToastHelper.showSuccess(context, 'Signed out successfully');
+        Navigator.of(context).pushNamedAndRemoveUntil('/login-screen', (route) => false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastHelper.showError(context, 'Failed to sign out: ${e.toString()}');
+      }
+    }
+  }
+
+  void _toggleBookmark(String postId) {
     setState(() {
-      final postIndex = _blogPosts.indexWhere((post) => post['id'] == postId);
-      if (postIndex != -1) {
-        _blogPosts[postIndex]['isBookmarked'] =
-        !_blogPosts[postIndex]['isBookmarked'];
+      final index = _blogPosts.indexWhere((post) => post['id'] == postId);
+      if (index != -1) {
+        _blogPosts[index]['isBookmarked'] = !_blogPosts[index]['isBookmarked'];
       }
     });
   }
@@ -194,44 +204,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 color: Theme.of(context).colorScheme.primary,
                 size: 24,
               ),
-              title: Text(
-                post['isBookmarked'] ? 'Remove Bookmark' : 'Bookmark',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
+              title: Text(post['isBookmarked'] ? 'Remove Bookmark' : 'Bookmark'),
               onTap: () {
                 _toggleBookmark(post['id']);
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: CustomIconWidget(
-                iconName: 'share',
-                color: Theme.of(context).colorScheme.primary,
-                size: 24,
-              ),
-              title: Text(
-                'Share',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                // Share functionality would be implemented here
-              },
+              leading: CustomIconWidget(iconName: 'share', color: Theme.of(context).colorScheme.primary, size: 24),
+              title: const Text('Share'),
+              onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: CustomIconWidget(
-                iconName: 'watch_later',
-                color: Theme.of(context).colorScheme.primary,
-                size: 24,
-              ),
-              title: Text(
-                'Save for Later',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                // Save for later functionality would be implemented here
-              },
+              leading: CustomIconWidget(iconName: 'watch_later', color: Theme.of(context).colorScheme.primary, size: 24),
+              title: const Text('Save for Later'),
+              onTap: () => Navigator.pop(context),
             ),
             SizedBox(height: 2.h),
           ],
@@ -242,193 +229,108 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 0.5,
-                  ),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              // App bar
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'BlogHub',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: CustomIconWidget(iconName: 'brightness_6', color: Theme.of(context).colorScheme.onSurface),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: CustomIconWidget(iconName: 'menu', color: Theme.of(context).colorScheme.onSurface),
+                      onPressed: () {},
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  // Logo
-                  Text(
-                    'BlogHub',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const Spacer(),
-                  // View toggle
-                  // IconButton(
-                  //   onPressed: () {
-                  //     setState(() {
-                  //       _isGridView = !_isGridView;
-                  //     });
-                  //   },
-                  //   icon: CustomIconWidget(
-                  //     iconName: _isGridView ? 'view_list' : 'grid_view',
-                  //     color: Theme.of(context).colorScheme.onSurface,
-                  //     size: 24,
-                  //   ),
-                  // ),
-                  // Theme toggle
-                  IconButton(
-                    onPressed: () {
-                      // Theme toggle functionality would be implemented here
-                    },
-                    icon: CustomIconWidget(
-                      iconName: 'brightness_6',
-                      color: Theme.of(context).colorScheme.onSurface,
-                      size: 24,
-                    ),
-                  ),
-                  // Menu
-                  IconButton(
-                    onPressed: () {
-                      // Navigation drawer functionality would be implemented here
-                    },
-                    icon: CustomIconWidget(
-                      iconName: 'menu',
-                      color: Theme.of(context).colorScheme.onSurface,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
-            // Category chips
-            Container(
-              height: 6.h,
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                itemCount: _categories.length,
-                itemBuilder: (context, index) {
-                  return CategoryChipWidget(
-                    category: _categories[index],
-                    isSelected: _selectedCategory == _categories[index],
-                    onTap: () {
-                      setState(() {
-                        _selectedCategory = _categories[index];
-                      });
-                    },
-                  );
-                },
+              // Category chips
+              Container(
+                height: 6.h,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    return CategoryChipWidget(
+                      category: _categories[index],
+                      isSelected: _selectedCategory == _categories[index],
+                      onTap: () => setState(() => _selectedCategory = _categories[index]),
+                    );
+                  },
+                ),
               ),
-            ),
 
-            // Main content
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _handleRefresh,
-                child: _buildGridView(),
+              // Post list
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                  onRefresh: _handleRefresh,
+                  child: _buildGridView(),
+                ),
               ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            setState(() => _currentIndex = index);
+            if (index == 3) Navigator.pushNamed(context, '/profile-screen');
+          },
+          items: [
+            BottomNavigationBarItem(
+              icon: CustomIconWidget(iconName: 'home', color: _navColor(0), size: 24),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: CustomIconWidget(iconName: 'search', color: _navColor(1), size: 24),
+              label: 'Search',
+            ),
+            BottomNavigationBarItem(
+              icon: CustomIconWidget(iconName: 'bookmark', color: _navColor(2), size: 24),
+              label: 'Bookmarks',
+            ),
+            BottomNavigationBarItem(
+              icon: CustomIconWidget(iconName: 'person', color: _navColor(3), size: 24),
+              label: 'Profile',
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-
-          switch (index) {
-            case 0:
-            // Already on home
-              break;
-            case 1:
-            // Navigate to search (not implemented)
-              break;
-            case 2:
-            // Navigate to bookmarks (not implemented)
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/profile-screen');
-              break;
-          }
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'home',
-              color: _currentIndex == 0
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withOpacity(0.6),
-              size: 24,
-            ),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'search',
-              color: _currentIndex == 1
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withOpacity(0.6),
-              size: 24,
-            ),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'bookmark',
-              color: _currentIndex == 2
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withOpacity(0.6),
-              size: 24,
-            ),
-            label: 'Bookmarks',
-          ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'person',
-              color: _currentIndex == 3
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withOpacity(0.6),
-              size: 24,
-            ),
-            label: 'Profile',
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/categories-screen');
-        },
-        child: CustomIconWidget(
-          iconName: 'filter_list',
-          color: Theme.of(context).colorScheme.onPrimary,
-          size: 24,
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.addBlogScreen),
+          child: CustomIconWidget(iconName: 'filter_list', color: Theme.of(context).colorScheme.onPrimary, size: 24),
         ),
       ),
     );
+  }
+
+  Color _navColor(int index) {
+    return _currentIndex == index
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
   }
 
   Widget _buildListView() {
@@ -440,15 +342,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return BlogPostCardWidget(
           post: post,
           isGridView: false,
-          onTap: () {
-            // Navigate to post detail (not implemented)
-          },
-          onLongPress: () {
-            _showQuickActions(context, post);
-          },
-          onBookmarkTap: () {
-            _toggleBookmark(post['id']);
-          },
+          onTap: () {},
+          onLongPress: () => _showQuickActions(context, post),
+          onBookmarkTap: () => _toggleBookmark(post['id']),
         );
       },
     );
@@ -459,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.55, // Adjusted from 0.75 to make items taller and fit content
+        childAspectRatio: 0.55,
         crossAxisSpacing: 3.w,
         mainAxisSpacing: 2.h,
       ),
@@ -469,15 +365,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         return BlogPostCardWidget(
           post: post,
           isGridView: true,
-          onTap: () {
-            // Navigate to post detail (not implemented)
-          },
-          onLongPress: () {
-            _showQuickActions(context, post);
-          },
-          onBookmarkTap: () {
-            _toggleBookmark(post['id']);
-          },
+          onTap: () {},
+          onLongPress: () => _showQuickActions(context, post),
+          onBookmarkTap: () => _toggleBookmark(post['id']),
         );
       },
     );

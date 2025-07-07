@@ -326,12 +326,12 @@ class _TrackingWidgetState extends State<TrackingWidget> {
         'page': '/#$currentPage',
       };
 
-      web.window.parentCrossOrigin?.postMessage(
-          {
-            'type': 'USER_INTERACTION',
-            'payload': interactionData,
-          }.jsify(),
-          '*'.toJS);
+      // web.window.parentCrossOrigin?.postMessage(
+      //     {
+      //       'type': 'USER_INTERACTION',
+      //       'payload': interactionData,
+      //     }.jsify(),
+      //     '*'.toJS);
 
       // print('Interaction Data: $interactionData');
     } catch (error) {

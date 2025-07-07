@@ -1,10 +1,13 @@
+import 'package:bloghub/auth/auth_wrapper.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import 'firebase_options.dart';
 
-import '../core/app_export.dart';
-import '../widgets/custom_error_widget.dart';
+import 'core/app_export.dart'; // Fixed import path
+import 'widgets/custom_error_widget.dart'; // Fixed import path
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
@@ -15,8 +18,40 @@ void main() async {
 
   // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
   ErrorWidget.builder = (FlutterErrorDetails details) {
-    return CustomErrorWidget(
-      errorDetails: details,
+    if (kDebugMode) {
+      return CustomErrorWidget(
+        errorDetails: details,
+      );
+    }
+    // Simple error widget for release mode
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Material(
+          child: Container(
+            color: Colors.red.shade50,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, color: Colors.red, size: 48),
+                  SizedBox(height: 16),
+                  Text(
+                    'Something went wrong',
+                    style: TextStyle(fontSize: 18, color: Colors.red.shade800),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Please restart the app',
+                    style: TextStyle(fontSize: 14, color: Colors.red.shade600),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   };
 
@@ -33,6 +68,9 @@ Future<void> initializeFirebase() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await FirebaseAuth.instance.setSettings(
+      appVerificationDisabledForTesting: true,
     );
     await testFirebaseConnection();
   } catch (e) {
@@ -85,8 +123,14 @@ class MyApp extends StatelessWidget {
         },
         // 🚨 END CRITICAL SECTION
         debugShowCheckedModeBanner: false,
+
+        // SOLUTION: Use either 'routes' OR 'home', not both
+        // Option 1: Use routes with initialRoute
         routes: AppRoutes.routes,
         initialRoute: AppRoutes.initial,
+
+        // Option 2: Use home (comment out the above two lines and uncomment this)
+        // home: AuthWrapper(),
       );
     });
   }
