@@ -111,21 +111,21 @@ class ProfileHeaderWidget extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
 
-          SizedBox(height: 2.h),
+          // SizedBox(height: 2.h),
 
           // Edit Profile Button
-          OutlinedButton.icon(
-            onPressed: onEditPressed,
-            icon: CustomIconWidget(
-              iconName: 'edit',
-              color: Theme.of(context).colorScheme.primary,
-              size: 18,
-            ),
-            label: Text("Edit Profile"),
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
-            ),
-          ),
+          // OutlinedButton.icon(
+          //   onPressed: onEditPressed,
+          //   icon: CustomIconWidget(
+          //     iconName: 'edit',
+          //     color: Theme.of(context).colorScheme.primary,
+          //     size: 18,
+          //   ),
+          //   label: Text("Edit Profile"),
+          //   style: OutlinedButton.styleFrom(
+          //     padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+          //   ),
+          // ),
         ],
       ),
     );

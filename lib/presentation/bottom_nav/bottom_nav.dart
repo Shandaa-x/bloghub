@@ -35,23 +35,26 @@ class _BottomNavState extends State<BottomNav> {
         type: BottomNavigationBarType.fixed,
         onTap: (index) {
           setState(() => _currentIndex = index);
-          if (index == 3) Navigator.pushNamed(context, AppRoutes.profileScreen);
         },
         items: [
           BottomNavigationBarItem(
-            icon: CustomIconWidget(iconName: 'home', color: _navColor(0), size: 24),
+            icon: CustomIconWidget(
+                iconName: 'home', color: _navColor(0), size: 24),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: CustomIconWidget(iconName: 'search', color: _navColor(1), size: 24),
+            icon: CustomIconWidget(
+                iconName: 'search', color: _navColor(1), size: 24),
             label: 'Search',
           ),
           BottomNavigationBarItem(
-            icon: CustomIconWidget(iconName: 'bookmark', color: _navColor(2), size: 24),
+            icon: CustomIconWidget(
+                iconName: 'bookmark', color: _navColor(2), size: 24),
             label: 'Bookmarks',
           ),
           BottomNavigationBarItem(
-            icon: CustomIconWidget(iconName: 'person', color: _navColor(3), size: 24),
+            icon: CustomIconWidget(
+                iconName: 'person', color: _navColor(3), size: 24),
             label: 'Profile',
           ),
         ],

@@ -84,7 +84,9 @@ class ToastHelper {
   }
 
   // Custom toast with overlay (more like traditional toast)
-  static void showCustomToast(BuildContext context, String message, {
+  static void showCustomToast(
+    BuildContext context,
+    String message, {
     Color backgroundColor = Colors.black87,
     Color textColor = Colors.white,
     Duration duration = const Duration(seconds: 2),

@@ -20,7 +20,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
@@ -46,7 +47,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       });
 
       try {
-        UserCredential? result = await _authService.registerWithEmailAndPassword(
+        UserCredential? result =
+            await _authService.registerWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
           fullName: _fullNameController.text.trim(),
@@ -56,9 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (mounted && result != null) {
           // Show success toast
           ToastHelper.showSuccess(
-              context,
-              'Registration successful! Welcome to BlogHub!'
-          );
+              context, 'Registration successful! Welcome to BlogHub!');
 
           // Clear form
           _fullNameController.clear();
@@ -83,17 +83,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         // Show error toast
         ToastHelper.showError(context, _errorMessage!);
-
       } catch (e) {
         setState(() {
           // Handle PigeonUserDetails error gracefully
           if (e.toString().contains('PigeonUserDetails') &&
               FirebaseAuth.instance.currentUser != null) {
             // User was created successfully despite the error
-            ToastHelper.showSuccess(
-                context,
-                'Registration successful! Some features may take a moment to setup.'
-            );
+            ToastHelper.showSuccess(context,
+                'Registration successful! Some features may take a moment to setup.');
 
             Navigator.pushReplacement(
               context,
@@ -162,27 +159,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'BlogHub',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                 ),
                 SizedBox(height: 1.h),
                 Text(
                   'Create Your Account',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 SizedBox(height: 1.h),
                 Text(
                   'Sign up now to get started.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
+                      ),
                 ),
                 SizedBox(height: 5.h),
-
                 _buildTextField(
                   controller: _fullNameController,
                   label: 'Full Name',
@@ -191,12 +190,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Please enter your full name'
                       : value.trim().length < 2
-                      ? 'Name must be at least 2 characters long'
-                      : null,
+                          ? 'Name must be at least 2 characters long'
+                          : null,
                 ),
-
                 SizedBox(height: 2.h),
-
                 _buildTextField(
                   controller: _emailController,
                   label: 'Email Address',
@@ -206,12 +203,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Please enter your email'
                       : !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())
-                      ? 'Please enter a valid email address'
-                      : null,
+                          ? 'Please enter a valid email address'
+                          : null,
                 ),
-
                 SizedBox(height: 2.h),
-
                 _buildTextField(
                   controller: _passwordController,
                   label: 'Password',
@@ -220,8 +215,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: !_passwordVisible,
                   suffixIcon: IconButton(
                     icon: CustomIconWidget(
-                      iconName: _passwordVisible ? 'visibility' : 'visibility_off',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      iconName:
+                          _passwordVisible ? 'visibility' : 'visibility_off',
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     onPressed: () {
                       setState(() => _passwordVisible = !_passwordVisible);
@@ -230,14 +229,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (value) => value == null || value.isEmpty
                       ? 'Please enter a password'
                       : value.length < 8
-                      ? 'Password must be at least 8 characters'
-                      : !RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)
-                      ? 'Include upper, lower, and numbers'
-                      : null,
+                          ? 'Password must be at least 8 characters'
+                          : !RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)')
+                                  .hasMatch(value)
+                              ? 'Include upper, lower, and numbers'
+                              : null,
                 ),
-
                 SizedBox(height: 2.h),
-
                 _buildTextField(
                   controller: _confirmPasswordController,
                   label: 'Confirm Password',
@@ -246,22 +244,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: !_confirmPasswordVisible,
                   suffixIcon: IconButton(
                     icon: CustomIconWidget(
-                      iconName: _confirmPasswordVisible ? 'visibility' : 'visibility_off',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      iconName: _confirmPasswordVisible
+                          ? 'visibility'
+                          : 'visibility_off',
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     onPressed: () {
-                      setState(() => _confirmPasswordVisible = !_confirmPasswordVisible);
+                      setState(() =>
+                          _confirmPasswordVisible = !_confirmPasswordVisible);
                     },
                   ),
                   validator: (value) => value == null || value.isEmpty
                       ? 'Please confirm your password'
                       : value != _passwordController.text
-                      ? 'Passwords do not match'
-                      : null,
+                          ? 'Passwords do not match'
+                          : null,
                 ),
-
                 SizedBox(height: 3.h),
-
                 if (_errorMessage != null)
                   Padding(
                     padding: EdgeInsets.only(bottom: 2.h),
@@ -273,7 +275,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red, size: 20),
+                          Icon(Icons.error_outline,
+                              color: Colors.red, size: 20),
                           SizedBox(width: 2.w),
                           Expanded(
                             child: Text(
@@ -285,48 +288,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ),
-
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     padding: EdgeInsets.symmetric(vertical: 2.h),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     minimumSize: Size(double.infinity, 6.h),
                   ),
                   child: _isLoading
                       ? CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    strokeWidth: 2,
-                  )
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          strokeWidth: 2,
+                        )
                       : Text('Create Account',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        fontWeight: FontWeight.w600,
-                      )),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            fontWeight: FontWeight.w600,
+                          )),
                 ),
-
                 SizedBox(height: 3.h),
-
                 Text(
                   'By creating an account, you agree to our Terms of Service and Privacy Policy.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  ),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
+                      ),
                   textAlign: TextAlign.center,
                 ),
-
                 SizedBox(height: 3.h),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("Already have an account?",
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                        )),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.7),
+                            )),
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isLoading ? null : () => Navigator.pop(context),
                       child: Text('Login',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,

@@ -54,7 +54,10 @@ class AuthService {
       // If the user was created in Auth but Firestore failed
       if (userCredential?.user != null) {
         try {
-          await _firestore.collection('users').doc(userCredential!.user!.uid).set({
+          await _firestore
+              .collection('users')
+              .doc(userCredential!.user!.uid)
+              .set({
             'uid': userCredential.user!.uid,
             'fullName': fullName.trim(),
             'email': userCredential.user!.email ?? '',
@@ -151,7 +154,6 @@ class AuthService {
 
       // Also create user stats document
       await _createUserStatsDocument(user.uid);
-
     } catch (e) {
       print('❌ Failed to create Firestore document: $e');
       throw Exception('Failed to create user profile: ${e.toString()}');
@@ -187,7 +189,8 @@ class AuthService {
     try {
       print('🔄 Verifying user document creation...');
 
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(uid).get();
 
       if (doc.exists) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
@@ -202,7 +205,8 @@ class AuthService {
       }
     } catch (e) {
       print('❌ User document verification failed: $e');
-      throw Exception('Failed to verify user document creation: ${e.toString()}');
+      throw Exception(
+          'Failed to verify user document creation: ${e.toString()}');
     }
   }
 
@@ -277,7 +281,8 @@ class AuthService {
   // Get complete user data from Firestore
   Future<Map<String, dynamic>?> getCompleteUserData(String uid) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
         return doc.data() as Map<String, dynamic>?;
       }
@@ -371,7 +376,8 @@ class AuthService {
   // Check if user exists in Firestore
   Future<bool> userExistsInFirestore(String uid) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      DocumentSnapshot doc =
+          await _firestore.collection('users').doc(uid).get();
       return doc.exists;
     } catch (e) {
       print('Error checking user existence: $e');

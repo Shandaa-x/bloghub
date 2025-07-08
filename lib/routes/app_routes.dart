@@ -1,6 +1,8 @@
 import 'package:bloghub/auth/login_screen.dart';
 import 'package:bloghub/presentation/add_blog_screen/add_blog_screen.dart';
 import 'package:bloghub/presentation/bottom_nav/bottom_nav.dart';
+import 'package:bloghub/presentation/edit_blog_screen/edit_blog_screen.dart';
+import 'package:bloghub/presentation/my_blogs_screen/my_blogs_screen.dart';
 import 'package:flutter/material.dart';
 import '../auth/register_screen.dart';
 import '../presentation/home_screen/home_screen.dart';
@@ -16,6 +18,8 @@ class AppRoutes {
   static const String registerScreen = '/register-screen';
   static const String addBlogScreen = '/add-blog-screen';
   static const String bottomNav = '/bottom-nav';
+  static const String myBlogsScreen = '/my-blogs-screen';
+  static const String editBlogsScreen = '/edit-blogs-screen';
 
   static Map<String, WidgetBuilder> routes = {
     initial: (context) => const LoginScreen(),
@@ -25,6 +29,12 @@ class AppRoutes {
     registerScreen: (context) => const RegisterScreen(),
     addBlogScreen: (context) => const AddBlogScreen(),
     bottomNav: (context) => const BottomNav(),
+    myBlogsScreen: (context) => const MyBlogsScreen(),
+    editBlogsScreen: (context) {
+      final post =
+          ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      return EditBlogScreen(post: post);
+    },
     // TODO: Add your other routes here
   };
 }

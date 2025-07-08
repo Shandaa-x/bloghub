@@ -92,7 +92,6 @@ Future<void> testFirebaseConnection() async {
       // Note: This will only work if you have proper Firestore rules set up
       // await FirebaseFirestore.instance.enableNetwork();
       // print("✅ Firestore connection successful!");
-
     } else {
       print("❌ Firebase apps list is empty");
     }

@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../services/auth_services.dart';
+import '../../theme/toast_helper.dart';
 import '../../widgets/custom_icon_widget.dart';
 import './widgets/profile_header_widget.dart';
 import './widgets/reading_stats_widget.dart';
@@ -23,19 +27,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _readingReminders = false;
   String _selectedLanguage = 'English';
   String _readingMode = 'Comfortable';
+  final AuthService _authService = AuthService();
 
-  // Mock user data
-  final Map<String, dynamic> _userData = {
-    "name": "Sarah Johnson",
-    "username": "@sarahreads",
-    "joinDate": "Joined March 2023",
-    "avatar":
-        "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face",
-    "totalPostsRead": 247,
-    "readingStreak": 12,
-    "favoriteCategories": 5,
-    "timeSpentReading": "48h 32m"
-  };
+  bool _isLoading = true;
+  Map<String, dynamic>? _userData;
 
   final List<String> _languages = [
     'English',
@@ -47,6 +42,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final List<String> _readingModes = ['Comfortable', 'Compact', 'Spacious'];
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        final DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
+
+        if (userDoc.exists) {
+          final data = userDoc.data() as Map<String, dynamic>;
+
+          setState(() {
+            _userData = {
+              "name": data['fullName'] ?? data['name'] ?? 'Unknown User',
+              "username": data['username'] ??
+                  '@${data['email']?.split('@')[0] ?? 'user'}',
+              "joinDate": _formatJoinDate(data['createdAt']),
+              "avatar": data['avatar'] ??
+                  data['profileImage'] ??
+                  'https://via.placeholder.com/150',
+              "totalPostsRead": data['totalPostsRead'] ?? 0,
+              "readingStreak": data['readingStreak'] ?? 0,
+              "favoriteCategories": data['favoriteCategories'] ?? 0,
+              "timeSpentReading": data['timeSpentReading'] ?? "0h 0m",
+              "email": data['email'] ?? currentUser.email ?? '',
+              "uid": currentUser.uid,
+              "postsCount": data['postsCount'] ?? 0,
+            };
+            _isLoading = false;
+          });
+        } else {
+          await _createUserDocument(currentUser);
+        }
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      ToastHelper.showError(context, "Failed to load user data");
+    }
+  }
+
+  Future<void> _createUserDocument(User user) async {
+    try {
+      final userData = {
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'fullName': user.displayName ?? 'Unknown User',
+        'username': '@${user.email?.split('@')[0] ?? 'user'}',
+        'avatar': user.photoURL ?? 'https://via.placeholder.com/150',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'totalPostsRead': 0,
+        'readingStreak': 0,
+        'favoriteCategories': 0,
+        'timeSpentReading': "0h 0m",
+        'emailVerified': user.emailVerified,
+        'lastActiveAt': FieldValue.serverTimestamp(),
+        'postCount': 0,
+      };
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(userData);
+
+      // Reload user data after creation
+      await _loadUserData();
+    } catch (e) {
+      print('Error creating user document: $e');
+      ToastHelper.showError(context, 'Failed to create user profile');
+    }
+  }
+
+  String _formatJoinDate(dynamic timestamp) {
+    if (timestamp == null) return 'Recently joined';
+
+    DateTime date;
+    if (timestamp is Timestamp) {
+      date = timestamp.toDate();
+    } else if (timestamp is DateTime) {
+      date = timestamp;
+    } else {
+      return 'Recently joined';
+    }
+
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+
+    return 'Joined ${months[date.month - 1]} ${date.year}';
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -55,15 +163,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               // Profile Header
-              ProfileHeaderWidget(
-                userData: _userData,
-                onEditPressed: _showEditProfileDialog,
-              ),
+              if (_userData != null)
+                ProfileHeaderWidget(
+                  userData: _userData!,
+                  onEditPressed: _showEditProfileDialog,
+                ),
 
               SizedBox(height: 3.h),
 
               // Reading Statistics
-              ReadingStatsWidget(userData: _userData),
+              if (_userData != null) ReadingStatsWidget(userData: _userData!),
 
               SizedBox(height: 3.h),
 
@@ -731,14 +840,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Text("Cancel"),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Implement logout logic here
-            },
+            onPressed: _handleSignOut,
             child: Text("Logout"),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleSignOut() async {
+    try {
+      await _authService.signOut();
+      if (mounted) {
+        ToastHelper.showSuccess(context, 'Signed out successfully');
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastHelper.showError(context, 'Failed to sign out: ${e.toString()}');
+      }
+    }
   }
 }

@@ -368,7 +368,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8.0),
       ),
       elevation: 4,
-    ), dialogTheme: DialogThemeData(backgroundColor: backgroundLight),
+    ),
+    dialogTheme: DialogThemeData(backgroundColor: backgroundLight),
   );
 
   /// Dark theme optimized for low-light reading sessions
@@ -637,7 +638,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8.0),
       ),
       elevation: 4,
-    ), dialogTheme: DialogThemeData(backgroundColor: surfaceDark),
+    ),
+    dialogTheme: DialogThemeData(backgroundColor: surfaceDark),
   );
 
   /// Smart Typography Scaling - Builds text theme optimized for mobile reading

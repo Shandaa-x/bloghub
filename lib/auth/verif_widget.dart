@@ -21,7 +21,8 @@ class UserDataVerificationWidget extends StatelessWidget {
         title: Text('User Data Verification'),
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+        future:
+            FirebaseFirestore.instance.collection('users').doc(userId).get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -54,7 +55,8 @@ class UserDataVerificationWidget extends StatelessWidget {
             );
           }
 
-          Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+          Map<String, dynamic> userData =
+              snapshot.data!.data() as Map<String, dynamic>;
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(16),

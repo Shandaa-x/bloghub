@@ -1,5 +1,4 @@
-
-  import 'dart:convert';
+import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:js_interop';
 
@@ -8,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:web/web.dart' as web;
 
-var backendURL = "https://bloghub2303back.builtwithrocket.new/log-inspected-widget";
+var backendURL =
+    "https://bloghub2303back.builtwithrocket.new/log-inspected-widget";
 
 class CustomWidgetInspector extends StatefulWidget {
   final Widget child;
@@ -36,10 +36,12 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   }
 
   void _updateSelection(Offset position) {
-    final RenderObject? userRender = _childKey.currentContext?.findRenderObject();
+    final RenderObject? userRender =
+        _childKey.currentContext?.findRenderObject();
     if (userRender == null) return;
 
-    final RenderObject? target = _findRenderObjectAtPosition(position, userRender);
+    final RenderObject? target =
+        _findRenderObjectAtPosition(position, userRender);
 
     if (target != null && target != userRender) {
       if (_selectedRenderObject != target) {
@@ -61,12 +63,9 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
     if (_selectedElement != null && isInspectorEnabled) {
       try {
         var location = _getWidgetLocation(_selectedElement!);
-        var widgetName =
-        _selectedElement!.widget.runtimeType.toString();
-        var parentWidgetName =
-        _getParentWidgetType(_selectedElement!);
-        var properties =
-        _extractWidgetProperties(_selectedElement!);
+        var widgetName = _selectedElement!.widget.runtimeType.toString();
+        var parentWidgetName = _getParentWidgetType(_selectedElement!);
+        var properties = _extractWidgetProperties(_selectedElement!);
         if (location.isNotEmpty && widgetName.isNotEmpty) {
           var widgetInfo = <String, dynamic>{};
           widgetInfo['widgetName'] = widgetName;
@@ -90,7 +89,7 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   _listenEvent() {
     web.window.addEventListener(
         'message',
-            (web.Event event) {
+        (web.Event event) {
           try {
             final messageEvent = event as web.MessageEvent;
             if (messageEvent.data != null) {
@@ -113,10 +112,12 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   void _handleHover(PointerHoverEvent event) {
     if (!isInspectorEnabled) return;
 
-    final RenderObject? userRender = _childKey.currentContext?.findRenderObject();
+    final RenderObject? userRender =
+        _childKey.currentContext?.findRenderObject();
     if (userRender == null) return;
 
-    final RenderObject? target = _findRenderObjectAtPosition(event.position, userRender);
+    final RenderObject? target =
+        _findRenderObjectAtPosition(event.position, userRender);
 
     if (target != null && target != userRender) {
       if (_selectedRenderObject != target) {
@@ -152,37 +153,37 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
           children: [
             // Main child widget - no IgnorePointer wrapper
             MouseRegion(
-                onExit: (_) {
-                  if (isInspectorEnabled) {
-                    setState(() {
-                      _selectedRenderObject = null;
-                      _selectedElement = null;
-                    });
-                  }
-                },
-                // onHover: isInspectorEnabled ? _handleHover : null,
-                child: KeyedSubtree(
-                  key: _childKey,
-                  child: Stack(
-                    children: [
-                      widget.child, // Original UI
-                      if (isInspectorEnabled)
-                        Positioned.fill(
-                          child: Listener(
+              onExit: (_) {
+                if (isInspectorEnabled) {
+                  setState(() {
+                    _selectedRenderObject = null;
+                    _selectedElement = null;
+                  });
+                }
+              },
+              // onHover: isInspectorEnabled ? _handleHover : null,
+              child: KeyedSubtree(
+                key: _childKey,
+                child: Stack(
+                  children: [
+                    widget.child, // Original UI
+                    if (isInspectorEnabled)
+                      Positioned.fill(
+                        child: Listener(
+                          behavior: HitTestBehavior.translucent,
+                          onPointerDown: _handlePointerEvent,
+                          onPointerHover: _handleHover,
+                          onPointerMove: _handlePointerEvent,
+                          child: GestureDetector(
                             behavior: HitTestBehavior.translucent,
-                            onPointerDown: _handlePointerEvent,
-                            onPointerHover: _handleHover,
-                            onPointerMove: _handlePointerEvent,
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.translucent,
-                              onTap: _handleTap,
-                            ),
+                            onTap: _handleTap,
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
+            ),
 
             // Overlay showing the selected widget
             if (isInspectorEnabled && _selectedRenderObject != null)
@@ -203,9 +204,9 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   }
 
   RenderObject? _findRenderObjectAtPosition(
-      Offset position,
-      RenderObject root,
-      ) {
+    Offset position,
+    RenderObject root,
+  ) {
     // Simple hit test to find the smallest render object at the given position
     final List<RenderObject> hits = <RenderObject>[];
     _hitTestHelper(hits, position, root, root.getTransformTo(null));
@@ -223,11 +224,11 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   }
 
   bool _hitTestHelper(
-      List<RenderObject> hits,
-      Offset position,
-      RenderObject object,
-      Matrix4 transform,
-      ) {
+    List<RenderObject> hits,
+    Offset position,
+    RenderObject object,
+    Matrix4 transform,
+  ) {
     bool hit = false;
     final Matrix4? inverse = Matrix4.tryInvert(transform);
     if (inverse == null) {
@@ -480,53 +481,53 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
       if (buttonWidget is ElevatedButton) {
         properties['backgroundColor'] =
             widgetStatePropertyToResolvedValues<Color?>(
-              buttonWidget.style?.backgroundColor,
-                  (color) => colorToHex(color!),
-            );
+          buttonWidget.style?.backgroundColor,
+          (color) => colorToHex(color!),
+        );
         properties['foregroundColor'] =
             widgetStatePropertyToResolvedValues<Color?>(
-              buttonWidget.style?.foregroundColor,
-                  (color) => colorToHex(color!),
-            );
+          buttonWidget.style?.foregroundColor,
+          (color) => colorToHex(color!),
+        );
         properties['iconColor'] = widgetStatePropertyToResolvedValues<Color?>(
           buttonWidget.style?.iconColor,
-              (color) => colorToHex(color!),
+          (color) => colorToHex(color!),
         );
         properties['shadowColor'] = widgetStatePropertyToResolvedValues<Color?>(
           buttonWidget.style?.shadowColor,
-              (color) => colorToHex(color!),
+          (color) => colorToHex(color!),
         );
         properties['overlayColor'] =
             widgetStatePropertyToResolvedValues<Color?>(
-              buttonWidget.style?.overlayColor,
-                  (color) => colorToHex(color!),
-            );
+          buttonWidget.style?.overlayColor,
+          (color) => colorToHex(color!),
+        );
         properties['textStyle'] =
             widgetStatePropertyToResolvedValues<TextStyle?>(
-              buttonWidget.style?.textStyle,
-                  (value) => value.toString(),
-            );
+          buttonWidget.style?.textStyle,
+          (value) => value.toString(),
+        );
         properties['elevation'] = widgetStatePropertyToResolvedValues<double?>(
           buttonWidget.style?.elevation,
-              (value) => value.toString(),
+          (value) => value.toString(),
         );
         properties['padding'] =
             widgetStatePropertyToResolvedValues<EdgeInsetsGeometry?>(
-              buttonWidget.style?.padding,
-                  (value) => value.toString(),
-            );
+          buttonWidget.style?.padding,
+          (value) => value.toString(),
+        );
         properties['shape'] =
             widgetStatePropertyToResolvedValues<OutlinedBorder?>(
-              buttonWidget.style?.shape,
-                  (value) => value.toString(),
-            );
+          buttonWidget.style?.shape,
+          (value) => value.toString(),
+        );
         properties['minimumSize'] = widgetStatePropertyToResolvedValues<Size?>(
           buttonWidget.style?.minimumSize,
-              (value) => value.toString(),
+          (value) => value.toString(),
         );
         properties['maximumSize'] = widgetStatePropertyToResolvedValues<Size?>(
           buttonWidget.style?.maximumSize,
-              (value) => value.toString(),
+          (value) => value.toString(),
         );
       }
       final Widget? child = (buttonWidget as dynamic).child;
@@ -574,15 +575,15 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
     final decoration = {
       'border': textFieldWidget.decoration?.border.toString() ?? 'null',
       'enabledBorder':
-      textFieldWidget.decoration?.enabledBorder.toString() ?? 'null',
+          textFieldWidget.decoration?.enabledBorder.toString() ?? 'null',
       'focusedBorder':
-      textFieldWidget.decoration?.focusedBorder.toString() ?? 'null',
+          textFieldWidget.decoration?.focusedBorder.toString() ?? 'null',
       'disabledBorder':
-      textFieldWidget.decoration?.disabledBorder.toString() ?? 'null',
+          textFieldWidget.decoration?.disabledBorder.toString() ?? 'null',
       'errorBorder':
-      textFieldWidget.decoration?.errorBorder.toString() ?? 'null',
+          textFieldWidget.decoration?.errorBorder.toString() ?? 'null',
       'focusedErrorBorder':
-      textFieldWidget.decoration?.focusedErrorBorder.toString() ?? 'null',
+          textFieldWidget.decoration?.focusedErrorBorder.toString() ?? 'null',
       'fillColor': textFieldWidget.decoration?.fillColor != null
           ? colorToHex(textFieldWidget.decoration!.fillColor!)
           : 'null',
@@ -590,15 +591,16 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
       'hintText': textFieldWidget.decoration?.hintText.toString() ?? 'null',
       'hintStyle': getTextStyle(textFieldWidget.decoration?.hintStyle, element),
       'labelText': textFieldWidget.decoration?.labelText.toString() ?? 'null',
-      'labelStyle': getTextStyle(textFieldWidget.decoration?.labelStyle, element),
+      'labelStyle':
+          getTextStyle(textFieldWidget.decoration?.labelStyle, element),
       'prefixIcon': textFieldWidget.decoration?.prefixIcon.toString() ?? 'null',
       'prefixIconConstraints':
-      textFieldWidget.decoration?.prefixIconConstraints.toString() ??
-          'null',
+          textFieldWidget.decoration?.prefixIconConstraints.toString() ??
+              'null',
       'suffixIcon': textFieldWidget.decoration?.suffixIcon.toString() ?? 'null',
       'suffixIconConstraints':
-      textFieldWidget.decoration?.suffixIconConstraints.toString() ??
-          'null',
+          textFieldWidget.decoration?.suffixIconConstraints.toString() ??
+              'null',
       'counterText': textFieldWidget.decoration?.counterText.toString(),
     };
     properties['decoration'] = decoration;
@@ -687,63 +689,62 @@ Widget? _findWidgetOfTypeInAncestors<T>(Element element) {
 }
 
 Map<String, dynamic> getTextStyle(TextStyle? style, BuildContext context) {
-    final defaultStyle = DefaultTextStyle.of(context).style;
+  final defaultStyle = DefaultTextStyle.of(context).style;
 
-    return {
-      'color': style?.color != null
-          ? colorToHex(style!.color!)
-          : (defaultStyle.color != null ? colorToHex(defaultStyle.color!) : 'null'),
-      'fontSize': style?.fontSize?.round().toString() ??
-          defaultStyle.fontSize?.round().toString() ??
-          'null',
-      'backgroundColor': style?.backgroundColor != null
-          ? colorToHex(style!.backgroundColor!)
-          : (defaultStyle.backgroundColor != null
-          ? colorToHex(defaultStyle.backgroundColor!)
-          : 'null'),
-      'fontWeight': style?.fontWeight?.toString() ??
-          defaultStyle.fontWeight?.toString() ??
-          'null',
-      'fontStyle': style?.fontStyle?.toString() ??
-          defaultStyle.fontStyle?.toString() ??
-          'null',
-      'fontFamily': style?.fontFamily ??
-          defaultStyle.fontFamily ??
-          'null',
-      'letterSpacing': style?.letterSpacing?.toString() ??
-          defaultStyle.letterSpacing?.toString() ??
-          'null',
-      'wordSpacing': style?.wordSpacing?.toString() ??
-          defaultStyle.wordSpacing?.toString() ??
-          'null',
-      'textBaseline': style?.textBaseline?.toString() ??
-          defaultStyle.textBaseline?.toString() ??
-          'null',
-      'height': style?.height?.toString() ??
-          defaultStyle.height?.toString() ??
-          'null',
-      'overflow': style?.overflow?.toString() ??
-          defaultStyle.overflow?.toString() ??
-          'null',
-    };
-  }
+  return {
+    'color': style?.color != null
+        ? colorToHex(style!.color!)
+        : (defaultStyle.color != null
+            ? colorToHex(defaultStyle.color!)
+            : 'null'),
+    'fontSize': style?.fontSize?.round().toString() ??
+        defaultStyle.fontSize?.round().toString() ??
+        'null',
+    'backgroundColor': style?.backgroundColor != null
+        ? colorToHex(style!.backgroundColor!)
+        : (defaultStyle.backgroundColor != null
+            ? colorToHex(defaultStyle.backgroundColor!)
+            : 'null'),
+    'fontWeight': style?.fontWeight?.toString() ??
+        defaultStyle.fontWeight?.toString() ??
+        'null',
+    'fontStyle': style?.fontStyle?.toString() ??
+        defaultStyle.fontStyle?.toString() ??
+        'null',
+    'fontFamily': style?.fontFamily ?? defaultStyle.fontFamily ?? 'null',
+    'letterSpacing': style?.letterSpacing?.toString() ??
+        defaultStyle.letterSpacing?.toString() ??
+        'null',
+    'wordSpacing': style?.wordSpacing?.toString() ??
+        defaultStyle.wordSpacing?.toString() ??
+        'null',
+    'textBaseline': style?.textBaseline?.toString() ??
+        defaultStyle.textBaseline?.toString() ??
+        'null',
+    'height':
+        style?.height?.toString() ?? defaultStyle.height?.toString() ?? 'null',
+    'overflow': style?.overflow?.toString() ??
+        defaultStyle.overflow?.toString() ??
+        'null',
+  };
+}
 
 String colorToHex(Color color) {
   var alphaColor =
-  (color.a * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+      (color.a * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
   var redColor =
-  (color.r * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+      (color.r * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
   var greenColor =
-  (color.g * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+      (color.g * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
   var blueColor =
-  (color.b * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+      (color.b * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
   return '0X$alphaColor$redColor$greenColor$blueColor';
 }
 
 Map<String, String> widgetStatePropertyToResolvedValues<T>(
-    WidgetStateProperty<T>? stateProperty,
-    String Function(T value) valueToString,
-    ) {
+  WidgetStateProperty<T>? stateProperty,
+  String Function(T value) valueToString,
+) {
   if (stateProperty == null) {
     return {};
   }
@@ -785,4 +786,3 @@ void _sendWidgetInformation(Map<String, dynamic> widgetInfo) {
     print('Exception while reporting overflow error: $e');
   }
 }
-  

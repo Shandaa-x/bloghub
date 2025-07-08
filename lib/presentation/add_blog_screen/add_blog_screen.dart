@@ -35,7 +35,14 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
   File? _selectedImage;
   String? _imageUrl;
 
-  final List<String> _categories = ['Technology', 'Lifestyle', 'Design', 'Business', 'Health', 'Finance'];
+  final List<String> _categories = [
+    'Technology',
+    'Lifestyle',
+    'Design',
+    'Business',
+    'Health',
+    'Finance'
+  ];
 
   @override
   void dispose() {
@@ -98,10 +105,12 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
         throw Exception('User not authenticated');
       }
 
-      String fileName = 'blog_images/${user.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      String fileName =
+          'blog_images/${user.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg';
       print('📁 Upload path: $fileName');
 
-      UploadTask uploadTask = _storage.ref().child(fileName).putFile(_selectedImage!);
+      UploadTask uploadTask =
+          _storage.ref().child(fileName).putFile(_selectedImage!);
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
@@ -149,7 +158,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
 
       // Get user data from Firestore
       print('📄 Fetching user data...');
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(user.uid).get();
 
       if (!userDoc.exists) {
         print('⚠️ User document does not exist, creating basic profile...');
@@ -163,7 +173,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
       }
 
       Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
-      String authorName = userData?['fullName'] ?? user.displayName ?? 'Anonymous';
+      String authorName =
+          userData?['fullName'] ?? user.displayName ?? 'Anonymous';
       print('✅ Author name: $authorName');
 
       // Upload image if selected
@@ -172,7 +183,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
         print('📤 Uploading image...');
         imageUrl = await _uploadImage();
       } else {
-        imageUrl = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3';
+        imageUrl =
+            'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3';
         print('🖼️ Using default image');
       }
 
@@ -294,7 +306,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back), // Using regular icon instead of CustomIconWidget
+          icon: Icon(Icons
+              .arrow_back), // Using regular icon instead of CustomIconWidget
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -337,77 +350,77 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                 //     ),
                 //   ),
                 //   child:
-                  // _selectedImage != null
-                  //     ? ClipRRect(
-                  //         borderRadius: BorderRadius.circular(10),
-                  //         child: Stack(
-                  //           children: [
-                  //             Image.file(
-                  //               _selectedImage!,
-                  //               width: double.infinity,
-                  //               height: double.infinity,
-                  //               fit: BoxFit.cover,
-                  //             ),
-                  //             Positioned(
-                  //               top: 8,
-                  //               right: 8,
-                  //               child: Container(
-                  //                 decoration: BoxDecoration(
-                  //                   color: Colors.black54,
-                  //                   shape: BoxShape.circle,
-                  //                 ),
-                  //                 child: IconButton(
-                  //                   icon: Icon(Icons.close, color: Colors.white),
-                  //                   onPressed: () {
-                  //                     setState(() {
-                  //                       _selectedImage = null;
-                  //                     });
-                  //                   },
-                  //                 ),
-                  //               ),
-                  //             ),
-                  //           ],
-                  //         ),
-                  //       )
-                  //     : InkWell(
-                  //         onTap: _pickImage,
-                  //         borderRadius: BorderRadius.circular(10),
-                  //         child: Container(
-                  //           width: double.infinity,
-                  //           height: double.infinity,
-                  //           child: Column(
-                  //             mainAxisAlignment: MainAxisAlignment.center,
-                  //             children: [
-                  //               Icon(
-                  //                 Icons.add_photo_alternate,
-                  //                 size: 48,
-                  //                 color: Theme.of(context).colorScheme.primary,
-                  //               ),
-                  //               SizedBox(height: 2.h),
-                  //               Text(
-                  //                 'Add Cover Image',
-                  //                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  //                       color: Theme.of(context).colorScheme.primary,
-                  //                       fontWeight: FontWeight.w600,
-                  //                     ),
-                  //               ),
-                  //               SizedBox(height: 1.h),
-                  //               Text(
-                  //                 'Tap to select from gallery',
-                  //                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  //                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  //                     ),
-                  //               ),
-                  //             ],
-                  //           ),
-                  //         ),
-                  //       ),
+                // _selectedImage != null
+                //     ? ClipRRect(
+                //         borderRadius: BorderRadius.circular(10),
+                //         child: Stack(
+                //           children: [
+                //             Image.file(
+                //               _selectedImage!,
+                //               width: double.infinity,
+                //               height: double.infinity,
+                //               fit: BoxFit.cover,
+                //             ),
+                //             Positioned(
+                //               top: 8,
+                //               right: 8,
+                //               child: Container(
+                //                 decoration: BoxDecoration(
+                //                   color: Colors.black54,
+                //                   shape: BoxShape.circle,
+                //                 ),
+                //                 child: IconButton(
+                //                   icon: Icon(Icons.close, color: Colors.white),
+                //                   onPressed: () {
+                //                     setState(() {
+                //                       _selectedImage = null;
+                //                     });
+                //                   },
+                //                 ),
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       )
+                //     : InkWell(
+                //         onTap: _pickImage,
+                //         borderRadius: BorderRadius.circular(10),
+                //         child: Container(
+                //           width: double.infinity,
+                //           height: double.infinity,
+                //           child: Column(
+                //             mainAxisAlignment: MainAxisAlignment.center,
+                //             children: [
+                //               Icon(
+                //                 Icons.add_photo_alternate,
+                //                 size: 48,
+                //                 color: Theme.of(context).colorScheme.primary,
+                //               ),
+                //               SizedBox(height: 2.h),
+                //               Text(
+                //                 'Add Cover Image',
+                //                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                //                       color: Theme.of(context).colorScheme.primary,
+                //                       fontWeight: FontWeight.w600,
+                //                     ),
+                //               ),
+                //               SizedBox(height: 1.h),
+                //               Text(
+                //                 'Tap to select from gallery',
+                //                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                //                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                //                     ),
+                //               ),
+                //             ],
+                //           ),
+                //         ),
+                //       ),
                 // ),
                 Text(
                   'Image url',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 SizedBox(height: 1.h),
                 TextFormField(
@@ -420,7 +433,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   style: Theme.of(context).textTheme.titleMedium,
@@ -457,7 +471,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                   ),
                   items: _categories.map((category) {
                     return DropdownMenuItem(
@@ -492,7 +507,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   style: Theme.of(context).textTheme.titleMedium,
@@ -528,7 +544,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   maxLines: 3,
@@ -563,7 +580,8 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   maxLines: 15,
@@ -578,17 +596,17 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     return null;
                   },
                 ),
-
                 SizedBox(height: 4.h),
-
-                // Publish button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveBlog,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
-                      disabledBackgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                      disabledBackgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -603,15 +621,21 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
-                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
                                   strokeWidth: 2,
                                 ),
                               ),
                               SizedBox(width: 3.w),
                               Text(
                                 'Publishing...',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: Theme.of(context).colorScheme.onPrimary,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
                                       fontWeight: FontWeight.w600,
                                     ),
                               ),
@@ -619,14 +643,17 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                           )
                         : Text(
                             'Publish Blog Post',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onPrimary,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
                                   fontWeight: FontWeight.w600,
                                 ),
                           ),
                   ),
                 ),
-
                 SizedBox(height: 2.h),
               ],
             ),

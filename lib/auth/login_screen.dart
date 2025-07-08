@@ -43,7 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         // Sign in with Firebase
-        UserCredential? userCredential = await _authService.signInWithEmailAndPassword(
+        UserCredential? userCredential =
+            await _authService.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -82,7 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
         });
 
         ToastHelper.showError(context, _errorMessage!);
-
       } catch (e) {
         setState(() {
           _errorMessage = 'Login failed. Please try again.';
@@ -125,7 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(_emailController.text.trim())) {
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+        .hasMatch(_emailController.text.trim())) {
       ToastHelper.showWarning(context, 'Please enter a valid email address');
       return;
     }
@@ -150,7 +151,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       ToastHelper.showError(context, message);
     } catch (e) {
-      ToastHelper.showError(context, 'Failed to send reset email. Please try again.');
+      ToastHelper.showError(
+          context, 'Failed to send reset email. Please try again.');
     }
   }
 
@@ -171,24 +173,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'BlogHub',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                 ),
                 SizedBox(height: 1.h),
                 Text(
                   'Welcome Back!',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 SizedBox(height: 1.h),
                 Text(
                   'Sign in to continue to your account.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                  ),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
+                      ),
                 ),
 
                 SizedBox(height: 5.h),
@@ -203,7 +208,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     hintText: 'Enter your email',
                     prefixIcon: CustomIconWidget(
                       iconName: 'mail_outline',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -211,14 +219,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                        .hasMatch(value.trim())) {
                       return 'Please enter a valid email address';
                     }
                     return null;
@@ -237,12 +247,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     hintText: 'Enter your password',
                     prefixIcon: CustomIconWidget(
                       iconName: 'lock_outline',
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
                     suffixIcon: IconButton(
                       icon: CustomIconWidget(
-                        iconName: _passwordVisible ? 'visibility' : 'visibility_off',
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        iconName:
+                            _passwordVisible ? 'visibility' : 'visibility_off',
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
                       ),
                       onPressed: () {
                         setState(() {
@@ -256,7 +273,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   validator: (value) {
@@ -281,9 +299,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Forgot Password?',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                   ),
                 ),
@@ -298,10 +316,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       padding: EdgeInsets.all(2.h),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .error
+                            .withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .error
+                              .withOpacity(0.3),
                         ),
                       ),
                       child: Row(
@@ -315,9 +339,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.red,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.red,
+                                  ),
                             ),
                           ),
                         ],
@@ -330,30 +357,35 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    disabledBackgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    disabledBackgroundColor:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
                     minimumSize: Size(double.infinity, 6.h),
                     elevation: 0,
                   ),
                   child: _isLoading
                       ? SizedBox(
-                    width: 3.h,
-                    height: 3.h,
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      strokeWidth: 2,
-                    ),
-                  )
+                          width: 3.h,
+                          height: 3.h,
+                          child: CircularProgressIndicator(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : Text(
-                    'Login',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                          'Login',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
                 ),
 
                 SizedBox(height: 4.h),
@@ -405,19 +437,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       "Don't have an account?",
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.7),
+                          ),
                     ),
                     TextButton(
-                      onPressed: _isLoading ? null : () {
-                        Navigator.pushNamed(context, AppRoutes.registerScreen);
-                      },
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              Navigator.pushNamed(
+                                  context, AppRoutes.registerScreen);
+                            },
                       child: Text(
                         'Sign Up',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                       ),
                     ),
                   ],
