@@ -1,13 +1,11 @@
 import 'package:bloghub/presentation/home_screen/widgets/comment_post_card_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
 import '../../services/auth_services.dart';
 import '../../theme/toast_helper.dart';
-import '../../widgets/custom_icon_widget.dart';
 import './widgets/blog_post_card_widget.dart';
 import './widgets/category_chip_widget.dart';
 
@@ -27,10 +25,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   DocumentSnapshot? _lastDocument;
   bool _hasMore = true;
   bool _isLoadingMore = false;
-  final int _perPage = 6;
+  final int _perPage = 5;
 
   late ScrollController _scrollController;
-  bool _isHeaderVisible = true;
 
   List<Map<String, dynamic>> _blogPosts = [];
 
@@ -215,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 width: 10.w,
                 height: 0.5.h,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.onSurface,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -236,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 leading: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: CustomIconWidget(
@@ -255,12 +252,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 subtitle: Text(
                   'Create a new blog post',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 trailing: CustomIconWidget(
                   iconName: 'arrow_forward_ios',
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 16,
                 ),
                 onTap: () {
@@ -279,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 leading: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.secondary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: CustomIconWidget(
@@ -298,12 +295,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 subtitle: Text(
                   'Write a comment on a post',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 trailing: CustomIconWidget(
                   iconName: 'arrow_forward_ios',
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.onSurface,
                   size: 16,
                 ),
                 onTap: () {
@@ -603,65 +600,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildCommentCard(Map<String, dynamic> comment) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.comment, color: Theme.of(context).colorScheme.secondary),
-              SizedBox(width: 2.w),
-              Text(
-                comment['author'] ?? 'Anonymous',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12.sp,
-                ),
-              ),
-              Spacer(),
-              Text(
-                _formatDate(comment['createdAt']),
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 1.h),
-          Text(
-            comment['content'] ?? '',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(String? isoString) {
-    if (isoString == null || isoString.isEmpty) return '';
-    try {
-      final dt = DateTime.parse(isoString);
-      return "${dt.year}/${dt.month}/${dt.day}";
-    } catch (_) {
-      return '';
-    }
-  }
-
   Widget _buildNoBlogPostsWidget() {
     return Center(
       child: Column(
@@ -670,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           Icon(
             Icons.article_outlined,
             size: 20.w,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           SizedBox(height: 3.h),
           Text(
@@ -678,7 +616,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      Theme.of(context).colorScheme.onSurface,
                 ),
           ),
           SizedBox(height: 1.h),
@@ -686,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             'Pull down to refresh',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      Theme.of(context).colorScheme.onSurface,
                 ),
           ),
           SizedBox(height: 4.h),
