@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_icon_widget.dart';
@@ -22,16 +23,62 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _passwordVisible = false;
   bool _isLoading = false;
+  bool _rememberMe = false;
   String? _errorMessage;
 
   // Auth service instance
   final AuthService _authService = AuthService();
 
   @override
+  void initState() {
+    super.initState();
+    _loadRememberMePreference();
+    _checkAutoLogin();
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _loadRememberMePreference() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rememberMe = prefs.getBool('remember_me') ?? false;
+      if (_rememberMe) {
+        _emailController.text = prefs.getString('saved_email') ?? '';
+        _passwordController.text = prefs.getString('saved_password') ?? '';
+      }
+    });
+  }
+
+  // Check if user should be automatically logged in
+  void _checkAutoLogin() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool rememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (rememberMe && FirebaseAuth.instance.currentUser != null) {
+      // User is already authenticated and remember me is enabled
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
+      });
+    }
+  }
+
+  // Save remember me preference and credentials
+  Future<void> _saveRememberMePreference() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('remember_me', _rememberMe);
+
+    if (_rememberMe) {
+      await prefs.setString('saved_email', _emailController.text.trim());
+      await prefs.setString('saved_password', _passwordController.text.trim());
+    } else {
+      await prefs.remove('saved_email');
+      await prefs.remove('saved_password');
+    }
   }
 
   void _handleLogin() async {
@@ -44,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         // Sign in with Firebase
         UserCredential? userCredential =
-            await _authService.signInWithEmailAndPassword(
+        await _authService.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -64,15 +111,20 @@ class _LoginScreenState extends State<LoginScreen> {
             });
           }
 
+          // Save remember me preference after successful login
+          await _saveRememberMePreference();
+
           // Show success message
           ToastHelper.showSuccess(
             context,
             'Welcome back${user.displayName != null ? ', ${user.displayName}' : ''}!',
           );
 
-          // Clear form
-          _emailController.clear();
-          _passwordController.clear();
+          // Clear form if remember me is not checked
+          if (!_rememberMe) {
+            _emailController.clear();
+            _passwordController.clear();
+          }
 
           // Navigate to home screen
           Navigator.pushReplacementNamed(context, AppRoutes.bottomNav);
@@ -173,27 +225,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'BlogHub',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
                 SizedBox(height: 1.h),
                 Text(
                   'Welcome Back!',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 SizedBox(height: 1.h),
                 Text(
                   'Sign in to continue to your account.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.7),
-                      ),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
+                  ),
                 ),
 
                 SizedBox(height: 5.h),
@@ -220,7 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
                     contentPadding:
-                        EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+                    EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   validator: (value) {
@@ -255,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     suffixIcon: IconButton(
                       icon: CustomIconWidget(
                         iconName:
-                            _passwordVisible ? 'visibility' : 'visibility_off',
+                        _passwordVisible ? 'visibility' : 'visibility_off',
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
@@ -274,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surface,
                     contentPadding:
-                        EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+                    EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
                     errorStyle: TextStyle(color: Colors.red),
                   ),
                   validator: (value) {
@@ -289,24 +341,70 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
 
-                SizedBox(height: 1.h),
+                SizedBox(height: 2.h),
 
-                // Forgot Password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _isLoading ? null : _handleForgotPassword,
-                    child: Text(
-                      'Forgot Password?',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w500,
+                // Remember Me Checkbox and Forgot Password
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Remember Me Checkbox
+                    Row(
+                      children: [
+                        Theme(
+                          data: Theme.of(context).copyWith(
+                            checkboxTheme: CheckboxThemeData(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
                           ),
+                          child: Checkbox(
+                            value: _rememberMe,
+                            onChanged: _isLoading ? null : (bool? value) {
+                              setState(() {
+                                _rememberMe = value ?? false;
+                              });
+                            },
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                        SizedBox(width: 1.w),
+                        GestureDetector(
+                          onTap: _isLoading ? null : () {
+                            setState(() {
+                              _rememberMe = !_rememberMe;
+                            });
+                          },
+                          child: Text(
+                            'Remember Me',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.8),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+
+                    // Forgot Password
+                    TextButton(
+                      onPressed: _isLoading ? null : _handleForgotPassword,
+                      child: Text(
+                        'Forgot Password?',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                SizedBox(height: 3.h),
+                SizedBox(height: 2.h),
 
                 // Error Message
                 if (_errorMessage != null)
@@ -343,8 +441,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   .textTheme
                                   .bodyMedium
                                   ?.copyWith(
-                                    color: Colors.red,
-                                  ),
+                                color: Colors.red,
+                              ),
                             ),
                           ),
                         ],
@@ -358,77 +456,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     disabledBackgroundColor:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    Theme.of(context).colorScheme.primary.withOpacity(0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding:
-                        EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
+                    EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
                     minimumSize: Size(double.infinity, 6.h),
                     elevation: 0,
                   ),
                   child: _isLoading
                       ? SizedBox(
-                          width: 3.h,
-                          height: 3.h,
-                          child: CircularProgressIndicator(
-                            color: Theme.of(context).colorScheme.onPrimary,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Login',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                ),
-
-                SizedBox(height: 4.h),
-
-                // Social Login Section (Optional)
-                /*
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Theme.of(context).dividerColor)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w),
-                      child: Text(
-                        'OR',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                        ),
-                      ),
+                    width: 3.h,
+                    height: 3.h,
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      strokeWidth: 2,
                     ),
-                    Expanded(child: Divider(color: Theme.of(context).dividerColor)),
-                  ],
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Google Sign In Button
-                OutlinedButton.icon(
-                  onPressed: _isLoading ? null : () {
-                    // Implement Google Sign In
-                    ToastHelper.showInfo(context, 'Google Sign In coming soon!');
-                  },
-                  icon: Icon(Icons.login, size: 20),
-                  label: Text('Continue with Google'),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
-                    minimumSize: Size(double.infinity, 6.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  )
+                      : Text(
+                    'Login',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
 
-                SizedBox(height: 2.h),
-                */
+                SizedBox(height: 4.h),
 
                 // Don't have an account? Sign Up
                 Row(
@@ -437,25 +495,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       "Don't have an account?",
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.7),
-                          ),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
+                      ),
                     ),
                     TextButton(
                       onPressed: _isLoading
                           ? null
                           : () {
-                              Navigator.pushNamed(
-                                  context, AppRoutes.registerScreen);
-                            },
+                        Navigator.pushNamed(
+                            context, AppRoutes.registerScreen);
+                      },
                       child: Text(
                         'Sign Up',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],

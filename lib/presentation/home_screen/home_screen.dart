@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       'publishDate': _parseDate(data['publishDate']),
       'readingTime': data['readingTime'] ?? '',
       'category': data['category'] ?? '',
+      'content': data['content'] ?? '',
       'imageUrl': data['imageUrl'] ?? '',
       'excerpt': data['excerpt'] ?? '',
       'likes': data['likes'] ?? 0,
@@ -327,9 +328,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         body: SafeArea(
           child: Column(
             children: [
-              // App bar
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -347,12 +347,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               ),
                     ),
                     const Spacer(),
-                    IconButton(
-                      icon: CustomIconWidget(
-                          iconName: 'brightness_6',
-                          color: Theme.of(context).colorScheme.onSurface),
-                      onPressed: () {},
-                    ),
+                    // IconButton(
+                    //   icon: CustomIconWidget(
+                    //       iconName: 'brightness_6',
+                    //       color: Theme.of(context).colorScheme.onSurface),
+                    //   onPressed: () {},
+                    // ),
                     IconButton(
                       icon: CustomIconWidget(
                           iconName: 'menu',
@@ -362,8 +362,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ],
                 ),
               ),
-
-              // Category Chips
               Container(
                 height: 6.h,
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -381,8 +379,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   },
                 ),
               ),
-
-              // Post list
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())

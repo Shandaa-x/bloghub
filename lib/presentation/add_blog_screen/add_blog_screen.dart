@@ -590,7 +590,7 @@ class _AddBlogScreenState extends State<AddBlogScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter blog content';
                     }
-                    if (value.trim().length > 100) {
+                    if (value.trim().length < 10) {
                       return 'Content must be at least 100 characters long';
                     }
                     return null;

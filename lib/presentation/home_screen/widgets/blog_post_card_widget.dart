@@ -56,8 +56,7 @@ class BlogPostCardWidget extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor:
-                Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
             child: ClipOval(
               child: Image.network(
                 'https://static.vecteezy.com/system/resources/previews/005/544/718/non_2x/profile-icon-design-free-vector.jpg',
@@ -91,47 +90,31 @@ class BlogPostCardWidget extends StatelessWidget {
                     Text(
                       post['publishDate'] as String,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                     Text(
                       ' • ',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                     Text(
                       post['readingTime'] as String,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                     Text(
                       ' • ',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 2.w, vertical: 0.3.h),
+                      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.3.h),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -182,8 +165,7 @@ class BlogPostCardWidget extends StatelessWidget {
           Text(
             post['excerpt'] as String,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                   height: 1.4,
                 ),
             maxLines: 3,
@@ -211,27 +193,25 @@ class BlogPostCardWidget extends StatelessWidget {
               height: 25.h,
               fit: BoxFit.cover,
             ),
-            Positioned(
-              top: 2.w,
-              right: 2.w,
-              child: GestureDetector(
-                onTap: onBookmarkTap,
-                child: Container(
-                  padding: EdgeInsets.all(2.w),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: CustomIconWidget(
-                    iconName: (post['isBookmarked'] as bool)
-                        ? 'bookmark'
-                        : 'bookmark_border',
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ),
-            ),
+            // Positioned(
+            //   top: 2.w,
+            //   right: 2.w,
+            //   child: GestureDetector(
+            //     onTap: onBookmarkTap,
+            //     child: Container(
+            //       padding: EdgeInsets.all(2.w),
+            //       decoration: BoxDecoration(
+            //         color: Colors.black.withOpacity(0.6),
+            //         shape: BoxShape.circle,
+            //       ),
+            //       child: CustomIconWidget(
+            //         iconName: (post['isBookmarked'] as bool) ? 'bookmark' : 'bookmark_border',
+            //         color: Colors.white,
+            //         size: 18,
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -275,10 +255,7 @@ class BlogPostCardWidget extends StatelessWidget {
             Text(
               '${post['comments']} comments',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
             ),
             SizedBox(width: 2.w),
@@ -305,22 +282,18 @@ class BlogPostCardWidget extends StatelessWidget {
           ),
         ),
       ),
+      child: Text(post['content']),
       // child: Row(
       //   children: [
-      //     // Like Button
       //     Expanded(
       //       child: _buildActionButton(
       //         context,
       //         icon: (post['isLiked'] as bool? ?? false) ? 'favorite' : 'favorite_border',
       //         label: 'Like',
-      //         color: (post['isLiked'] as bool? ?? false)
-      //             ? Colors.red
-      //             : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+      //         color: (post['isLiked'] as bool? ?? false) ? Colors.red : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
       //         onTap: () => _handleLike(),
       //       ),
       //     ),
-      //
-      //     // Comment Button
       //     Expanded(
       //       child: _buildActionButton(
       //         context,
@@ -330,8 +303,6 @@ class BlogPostCardWidget extends StatelessWidget {
       //         onTap: () => _handleComment(),
       //       ),
       //     ),
-      //
-      //     // Share Button
       //     Expanded(
       //       child: _buildActionButton(
       //         context,
