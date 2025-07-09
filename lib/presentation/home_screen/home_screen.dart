@@ -1,3 +1,4 @@
+import 'package:bloghub/presentation/home_screen/widgets/comment_post_card_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final data = doc.data() as Map<String, dynamic>;
     return {
       'id': doc.id,
+      'type': 'blog',
       'title': data['title'] ?? '',
       'author': data['author'] ?? '',
       'publishDate': _parseDate(data['publishDate']),
@@ -44,6 +46,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       'category': data['category'] ?? '',
       'content': data['content'] ?? '',
       'imageUrl': data['imageUrl'] ?? '',
+      'excerpt': data['excerpt'] ?? '',
+      'likes': data['likes'] ?? 0,
+      'comments': data['comments'] ?? 0,
+      'isBookmarked': false,
+    };
+  }
+
+  Map<String, dynamic> _mapComment(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return {
+      'id': doc.id,
+      'type': 'comment',
+      'title': data['title'] ?? '',
+      'author': data['author'] ?? '',
+      'publishDate': _parseDate(data['publishDate']),
+      'readingTime': data['readingTime'] ?? '',
+      'category': data['category'] ?? '',
+      'content': data['content'] ?? '',
       'excerpt': data['excerpt'] ?? '',
       'likes': data['likes'] ?? 0,
       'comments': data['comments'] ?? 0,
@@ -66,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    _fetchInitialBlogPosts();
+    _fetchInitialFeedItems();
   }
 
   void _onScroll() {
@@ -76,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _fetchInitialBlogPosts() async {
+  Future<void> _fetchInitialFeedItems() async {
     setState(() {
       _isLoading = true;
       _hasMore = true;
@@ -84,27 +104,41 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
 
     try {
-      final query = FirebaseFirestore.instance
+      final blogQuery = FirebaseFirestore.instance
           .collection('blog_posts')
           .where('isPublished', isEqualTo: true)
           .orderBy('publishDate', descending: true)
           .limit(_perPage);
 
-      final snapshot = await query.get();
+      final commentQuery = FirebaseFirestore.instance
+          .collection('comments')
+          .orderBy('createdAt', descending: true)
+          .limit(_perPage);
 
-      final posts = snapshot.docs.map((doc) => _mapPost(doc)).toList();
+      final blogSnapshot = await blogQuery.get();
+      final commentSnapshot = await commentQuery.get();
+
+      final blogPosts = blogSnapshot.docs.map(_mapPost).toList();
+      final comments = commentSnapshot.docs.map(_mapComment).toList();
+
+      final allItems = [...blogPosts, ...comments];
+
+      allItems.sort((a, b) =>
+          (b['publishDate'] ?? b['createdAt'])
+              .compareTo(a['publishDate'] ?? a['createdAt']));
 
       setState(() {
-        _blogPosts = posts;
-        if (snapshot.docs.isNotEmpty) {
-          _lastDocument = snapshot.docs.last;
-        }
-        _hasMore = snapshot.docs.length == _perPage;
+        _blogPosts = allItems;
+        _lastDocument = blogSnapshot.docs.isNotEmpty
+            ? blogSnapshot.docs.last
+            : null; // You can store both blog and comment last docs for paging
+        _hasMore = blogSnapshot.docs.length == _perPage ||
+            commentSnapshot.docs.length == _perPage;
       });
     } catch (e) {
-      debugPrint("🔥 Error fetching postsssss: $e");
+      debugPrint("🔥 Error fetching feed: $e");
       if (mounted) {
-        ToastHelper.showError(context, 'Failed to fetch blog posts');
+        ToastHelper.showError(context, 'Failed to fetch feed');
       }
     } finally {
       if (mounted) {
@@ -164,20 +198,144 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredPosts {
-    if (_selectedCategory == 'All') {
-      return _blogPosts;
-    }
-    return _blogPosts
-        .where((post) => post['category'] == _selectedCategory)
-        .toList();
+  void _showAddOptionsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Bottom sheet handle
+              Container(
+                width: 10.w,
+                height: 0.5.h,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 2.h),
+
+              // Title
+              Text(
+                'Create New',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              SizedBox(height: 2.h),
+
+              // Add Blog ListTile
+              ListTile(
+                leading: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: CustomIconWidget(
+                    iconName: 'article',
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                title: Text(
+                  'Add Blog',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                subtitle: Text(
+                  'Create a new blog post',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                trailing: CustomIconWidget(
+                  iconName: 'arrow_forward_ios',
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  size: 16,
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.pushNamed(context, AppRoutes.addBlogScreen);
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+
+              SizedBox(height: 1.h),
+
+              // Add Comment ListTile
+              ListTile(
+                leading: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: CustomIconWidget(
+                    iconName: 'comment',
+                    color: Theme.of(context).colorScheme.secondary,
+                    size: 24,
+                  ),
+                ),
+                title: Text(
+                  'Add Comment',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                subtitle: Text(
+                  'Write a comment on a post',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                trailing: CustomIconWidget(
+                  iconName: 'arrow_forward_ios',
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  size: 16,
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.pushNamed(context, AppRoutes.addComment);
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+
+              SizedBox(height: 2.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<Map<String, dynamic>> get _filteredFeedItems {
+    if (_selectedCategory == 'All') return _blogPosts;
+
+    return _blogPosts.where((item) {
+      return item['category'] == _selectedCategory;
+    }).toList();
   }
 
   Future<void> _handleRefresh() async {
     setState(() {
       _isRefreshing = true;
     });
-    await _fetchInitialBlogPosts();
+    await _fetchInitialFeedItems();
     setState(() {
       _isRefreshing = false;
     });
@@ -384,7 +542,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ? const Center(child: CircularProgressIndicator())
                     : RefreshIndicator(
                         onRefresh: _handleRefresh,
-                        child: _filteredPosts.isEmpty
+                        child: _filteredFeedItems.isEmpty
                             ? _buildNoBlogPostsWidget()
                             : _buildFacebookStyleView(),
                       ),
@@ -393,8 +551,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () =>
-              Navigator.pushNamed(context, AppRoutes.addBlogScreen),
+          onPressed: () => _showAddOptionsBottomSheet(context),
           child: CustomIconWidget(
               iconName: 'add',
               color: Theme.of(context).colorScheme.onPrimary,
@@ -408,25 +565,101 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.symmetric(vertical: 1.h),
-      itemCount: _filteredPosts.length + (_isLoadingMore ? 1 : 0),
+      itemCount: _filteredFeedItems.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index >= _filteredPosts.length) {
+        if (index >= _filteredFeedItems.length) {
           return const Center(
-              child: Padding(
-            padding: EdgeInsets.all(16.0),
-            child: CircularProgressIndicator(),
-          ));
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
         }
 
-        final post = _filteredPosts[index];
-        return BlogPostCardWidget(
-          post: post,
-          onTap: () {},
-          onLongPress: () => _showQuickActions(context, post),
-          onBookmarkTap: () => _toggleBookmark(post['id']),
-        );
+        final item = _filteredFeedItems[index];
+
+        // 🟦 Blog Post
+        if (item['type'] == 'blog') {
+          return BlogPostCardWidget(
+            post: item,
+            onTap: () {},
+            onLongPress: () => _showQuickActions(context, item),
+            onBookmarkTap: () => _toggleBookmark(item['id']),
+          );
+        }
+
+        // 🟨 Comment Post
+        if (item['type'] == 'comment') {
+          return CommentPostCardWidget(
+            post: item,
+            onTap: () {},
+            onLongPress: () => _showQuickActions(context, item),
+            onBookmarkTap: () => _toggleBookmark(item['id']),
+          );
+        }
+
+        return const SizedBox.shrink();
       },
     );
+  }
+
+  Widget _buildCommentCard(Map<String, dynamic> comment) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.comment, color: Theme.of(context).colorScheme.secondary),
+              SizedBox(width: 2.w),
+              Text(
+                comment['author'] ?? 'Anonymous',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.sp,
+                ),
+              ),
+              Spacer(),
+              Text(
+                _formatDate(comment['createdAt']),
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 1.h),
+          Text(
+            comment['content'] ?? '',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(isoString);
+      return "${dt.year}/${dt.month}/${dt.day}";
+    } catch (_) {
+      return '';
+    }
   }
 
   Widget _buildNoBlogPostsWidget() {

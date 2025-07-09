@@ -1,5 +1,6 @@
 import 'package:bloghub/auth/login_screen.dart';
 import 'package:bloghub/presentation/add_blog_screen/add_blog_screen.dart';
+import 'package:bloghub/presentation/add_blog_screen/add_comment_screen.dart';
 import 'package:bloghub/presentation/bottom_nav/bottom_nav.dart';
 import 'package:bloghub/presentation/edit_blog_screen/edit_blog_screen.dart';
 import 'package:bloghub/presentation/my_blogs_screen/my_blogs_screen.dart';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const String bottomNav = '/bottom-nav';
   static const String myBlogsScreen = '/my-blogs-screen';
   static const String editBlogsScreen = '/edit-blogs-screen';
+  static const String addComment = '/add-comment-screen';
 
   static Map<String, WidgetBuilder> routes = {
     initial: (context) => const LoginScreen(),
@@ -30,6 +32,7 @@ class AppRoutes {
     addBlogScreen: (context) => const AddBlogScreen(),
     bottomNav: (context) => const BottomNav(),
     myBlogsScreen: (context) => const MyBlogsScreen(),
+    addComment: (context) => const AddCommentScreen(),
     editBlogsScreen: (context) {
       final post =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
