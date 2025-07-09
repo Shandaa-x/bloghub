@@ -32,13 +32,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _userData;
 
-  final List<String> _languages = [
-    'English',
-    'Spanish',
-    'French',
-    'German',
-    'Italian'
-  ];
+  final List<String> _languages = ['English', 'Spanish', 'French', 'German', 'Italian'];
   final List<String> _readingModes = ['Comfortable', 'Compact', 'Spacious'];
 
   @override
@@ -52,10 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final User? currentUser = FirebaseAuth.instance.currentUser;
 
       if (currentUser != null) {
-        final DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
+        final DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
 
         if (userDoc.exists) {
           final data = userDoc.data() as Map<String, dynamic>;
@@ -63,12 +54,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _userData = {
               "name": data['fullName'] ?? data['name'] ?? 'Unknown User',
-              "username": data['username'] ??
-                  '@${data['email']?.split('@')[0] ?? 'user'}',
+              "username": data['username'] ?? '@${data['email']?.split('@')[0] ?? 'user'}',
               "joinDate": _formatJoinDate(data['createdAt']),
-              "avatar": data['avatar'] ??
-                  data['profileImage'] ??
-                  'https://via.placeholder.com/150',
+              "avatar": data['avatar'] ?? data['profileImage'] ?? 'https://via.placeholder.com/150',
               "totalPostsRead": data['totalPostsRead'] ?? 0,
               "readingStreak": data['readingStreak'] ?? 0,
               "favoriteCategories": data['favoriteCategories'] ?? 0,
@@ -111,10 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'postCount': 0,
       };
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(userData);
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(userData);
 
       // Reload user data after creation
       await _loadUserData();
@@ -136,20 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return 'Recently joined';
     }
 
-    final months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
+    final months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     return 'Joined ${months[date.month - 1]} ${date.year}';
   }
@@ -168,23 +140,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   userData: _userData!,
                   onEditPressed: _showEditProfileDialog,
                 ),
-
               SizedBox(height: 3.h),
-
               // Reading Statistics
               if (_userData != null) ReadingStatsWidget(userData: _userData!),
-
               SizedBox(height: 3.h),
-
               // Settings Sections
               _buildSettingsSections(),
-
               SizedBox(height: 3.h),
-
               // Logout Button
               _buildLogoutButton(),
-
-              SizedBox(height: 10.h), // Bottom navigation space
+              SizedBox(height: 5.h), // Bottom navigation space
             ],
           ),
         ),
@@ -204,67 +169,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildReadingModeSelector(),
           ],
         ),
-
         SizedBox(height: 2.h),
-
         // Notifications
-        SettingsSectionWidget(
-          title: "Notifications",
-          children: [
-            _buildSwitchTile(
-              title: "Push Notifications",
-              subtitle: "Get notified about new posts",
-              value: _pushNotifications,
-              onChanged: (value) => setState(() => _pushNotifications = value),
-              icon: 'notifications',
-            ),
-            _buildSwitchTile(
-              title: "Category Updates",
-              subtitle: "Notifications for followed categories",
-              value: _categoryNotifications,
-              onChanged: (value) =>
-                  setState(() => _categoryNotifications = value),
-              icon: 'category',
-            ),
-            _buildSwitchTile(
-              title: "Reading Reminders",
-              subtitle: "Daily reading goal reminders",
-              value: _readingReminders,
-              onChanged: (value) => setState(() => _readingReminders = value),
-              icon: 'schedule',
-            ),
-          ],
-        ),
-
-        SizedBox(height: 2.h),
-
+        // SettingsSectionWidget(
+        //   title: "Notifications",
+        //   children: [
+        //     _buildSwitchTile(
+        //       title: "Push Notifications",
+        //       subtitle: "Get notified about new posts",
+        //       value: _pushNotifications,
+        //       onChanged: (value) => setState(() => _pushNotifications = value),
+        //       icon: 'notifications',
+        //     ),
+        //     _buildSwitchTile(
+        //       title: "Category Updates",
+        //       subtitle: "Notifications for followed categories",
+        //       value: _categoryNotifications,
+        //       onChanged: (value) => setState(() => _categoryNotifications = value),
+        //       icon: 'category',
+        //     ),
+        //     _buildSwitchTile(
+        //       title: "Reading Reminders",
+        //       subtitle: "Daily reading goal reminders",
+        //       value: _readingReminders,
+        //       onChanged: (value) => setState(() => _readingReminders = value),
+        //       icon: 'schedule',
+        //     ),
+        //   ],
+        // ),
+        // SizedBox(height: 2.h),
         // Account
-        SettingsSectionWidget(
-          title: "Account",
-          children: [
-            _buildNavigationTile(
-              title: "Edit Profile",
-              subtitle: "Update your profile information",
-              icon: 'edit',
-              onTap: _showEditProfileDialog,
-            ),
-            _buildNavigationTile(
-              title: "Change Password",
-              subtitle: "Update your account password",
-              icon: 'lock',
-              onTap: _showChangePasswordDialog,
-            ),
-            _buildNavigationTile(
-              title: "Export Data",
-              subtitle: "Download your reading data",
-              icon: 'download',
-              onTap: _showExportDataDialog,
-            ),
-          ],
-        ),
-
-        SizedBox(height: 2.h),
-
+        // SettingsSectionWidget(
+        //   title: "Account",
+        //   children: [
+        //     _buildNavigationTile(
+        //       title: "Edit Profile",
+        //       subtitle: "Update your profile information",
+        //       icon: 'edit',
+        //       onTap: _showEditProfileDialog,
+        //     ),
+        //     _buildNavigationTile(
+        //       title: "Change Password",
+        //       subtitle: "Update your account password",
+        //       icon: 'lock',
+        //       onTap: _showChangePasswordDialog,
+        //     ),
+        //     _buildNavigationTile(
+        //       title: "Export Data",
+        //       subtitle: "Download your reading data",
+        //       icon: 'download',
+        //       onTap: _showExportDataDialog,
+        //     ),
+        //   ],
+        // ),
+        // SizedBox(height: 2.h),
         // App Settings
         SettingsSectionWidget(
           title: "App Settings",
@@ -284,39 +242,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-
-        SizedBox(height: 2.h),
-
+        // SizedBox(height: 2.h),
         // About
-        SettingsSectionWidget(
-          title: "About",
-          children: [
-            _buildNavigationTile(
-              title: "App Version",
-              subtitle: "BlogHub v1.2.3",
-              icon: 'info',
-              showArrow: false,
-            ),
-            _buildNavigationTile(
-              title: "Privacy Policy",
-              subtitle: "How we protect your data",
-              icon: 'privacy_tip',
-              onTap: _showPrivacyPolicy,
-            ),
-            _buildNavigationTile(
-              title: "Terms of Service",
-              subtitle: "App usage terms and conditions",
-              icon: 'description',
-              onTap: _showTermsOfService,
-            ),
-            _buildNavigationTile(
-              title: "Send Feedback",
-              subtitle: "Help us improve the app",
-              icon: 'feedback',
-              onTap: _showFeedbackDialog,
-            ),
-          ],
-        ),
+        // SettingsSectionWidget(
+        //   title: "About",
+        //   children: [
+        //     _buildNavigationTile(
+        //       title: "App Version",
+        //       subtitle: "BlogHub v1.2.3",
+        //       icon: 'info',
+        //       showArrow: false,
+        //     ),
+        //     _buildNavigationTile(
+        //       title: "Privacy Policy",
+        //       subtitle: "How we protect your data",
+        //       icon: 'privacy_tip',
+        //       onTap: _showPrivacyPolicy,
+        //     ),
+        //     _buildNavigationTile(
+        //       title: "Terms of Service",
+        //       subtitle: "App usage terms and conditions",
+        //       icon: 'description',
+        //       onTap: _showTermsOfService,
+        //     ),
+        //     _buildNavigationTile(
+        //       title: "Send Feedback",
+        //       subtitle: "Help us improve the app",
+        //       icon: 'feedback',
+        //       onTap: _showFeedbackDialog,
+        //     ),
+        //   ],
+        // ),
       ],
     );
   }
@@ -398,11 +354,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SizedBox(height: 1.h),
           Row(
             children: [
-              _buildThemeOption("Light", !_isDarkMode,
-                  () => setState(() => _isDarkMode = false)),
+              _buildThemeOption("Light", !_isDarkMode, () => setState(() => _isDarkMode = false)),
               SizedBox(width: 4.w),
-              _buildThemeOption("Dark", _isDarkMode,
-                  () => setState(() => _isDarkMode = true)),
+              _buildThemeOption("Dark", _isDarkMode, () => setState(() => _isDarkMode = true)),
               SizedBox(width: 4.w),
               _buildThemeOption("Auto", false, () {}),
             ],
@@ -419,23 +373,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 1.h),
           decoration: BoxDecoration(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
-                : Colors.transparent,
+            color: isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.outline,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             ),
           ),
           child: Text(
             title,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
           ),
@@ -652,8 +600,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Edit Profile"),
-        content:
-            Text("Profile editing functionality would be implemented here."),
+        content: Text("Profile editing functionality would be implemented here."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -673,8 +620,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Change Password"),
-        content:
-            Text("Password change functionality would be implemented here."),
+        content: Text("Password change functionality would be implemented here."),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -853,8 +799,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _authService.signOut();
       if (mounted) {
         ToastHelper.showSuccess(context, 'Signed out successfully');
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
+        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.initial, (route) => false);
       }
     } catch (e) {
       if (mounted) {
