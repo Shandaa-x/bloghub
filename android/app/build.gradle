@@ -8,6 +8,12 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.bloghub.app"
     compileSdk = 35  // Updated to fix plugin warnings
@@ -27,18 +33,34 @@ android {
         applicationId = "com.bloghub.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // CHANGED: Updated from flutter.minSdkVersion to 23 (required for Firebase Auth)
+        minSdk = 23
+        // CHANGED: Updated from flutter.minSdkVersion to 23 (required for Firebase Auth)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled true
     }
 
+    signingConfigs {
+        release {
+            keyAlias = keystoreProperties["keyAlias"]
+            keyPassword = keystoreProperties["keyPassword"]
+            storePassword = keystoreProperties["storePassword"]
+
+            def storeFilePath = keystoreProperties["storeFile"]
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+            }
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Signing with the debug keys for now,
+            // so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

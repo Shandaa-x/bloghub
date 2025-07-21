@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   DocumentSnapshot? _lastDocument;
   bool _hasMore = true;
   bool _isLoadingMore = false;
-  final int _perPage = 5;
+  final int _perPage = 3;
 
   late ScrollController _scrollController;
 
