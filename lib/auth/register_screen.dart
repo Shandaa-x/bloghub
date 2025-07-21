@@ -365,6 +365,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       keyboardType: keyboardType,
       validator: validator,
       decoration: InputDecoration(
+        errorStyle: TextStyle(color: Colors.red),
         labelText: label,
         hintText: hint,
         prefixIcon: CustomIconWidget(

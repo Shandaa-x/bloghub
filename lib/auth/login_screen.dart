@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Add this import for SystemNavigator
 import 'package:sizer/sizer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/app_export.dart';
-import '../../widgets/custom_icon_widget.dart';
 import '../services/auth_services.dart';
 import '../theme/toast_helper.dart';
 
@@ -103,13 +103,19 @@ class _LoginScreenState extends State<LoginScreen> {
           bool userExists = await _authService.userExistsInFirestore(user!.uid);
 
           if (!userExists) {
-            // User doesn't exist in Firestore, create basic profile
-            await _authService.updateUserData(user.uid, {
-              'fullName': user.displayName ?? 'User',
-              'email': user.email ?? '',
-              'lastLoginAt': FieldValue.serverTimestamp(),
+            // User doesn't exist in Firestore - sign out and show error
+            await FirebaseAuth.instance.signOut();
+            setState(() {
+              _errorMessage = 'No user profile found. Please sign up first.';
             });
+            ToastHelper.showError(context, _errorMessage!);
+            return;
           }
+
+          // Update last login timestamp for existing user
+          await _authService.updateUserData(user.uid, {
+            'lastLoginAt': FieldValue.serverTimestamp(),
+          });
 
           // Save remember me preference after successful login
           await _saveRememberMePreference();
@@ -208,319 +214,328 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Handle back button press - exit app
+  Future<bool> _onWillPop() async {
+    SystemNavigator.pop(); // Exit the app
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 8.h),
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 4.h),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: 8.h),
 
-                // App Logo/Title
-                Text(
-                  'BlogHub',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+                  // App Logo/Title
+                  Text(
+                    'BlogHub',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
-                ),
-                SizedBox(height: 1.h),
-                Text(
-                  'Welcome Back!',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
+                  SizedBox(height: 1.h),
+                  Text(
+                    'Welcome Back!',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                SizedBox(height: 1.h),
-                Text(
-                  'Sign in to continue to your account.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.7),
-                  ),
-                ),
-
-                SizedBox(height: 5.h),
-
-                // Email Input
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    hintText: 'Enter your email',
-                    prefixIcon: CustomIconWidget(
-                      iconName: 'mail_outline',
+                  SizedBox(height: 1.h),
+                  Text(
+                    'Sign in to continue to your account.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
                           .onSurface
-                          .withOpacity(0.6),
+                          .withOpacity(0.7),
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding:
-                    EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
-                    errorStyle: TextStyle(color: Colors.red),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                        .hasMatch(value.trim())) {
-                      return 'Please enter a valid email address';
-                    }
-                    return null;
-                  },
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
 
-                SizedBox(height: 2.h),
+                  SizedBox(height: 5.h),
 
-                // Password Input
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: !_passwordVisible,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
-                    prefixIcon: CustomIconWidget(
-                      iconName: 'lock_outline',
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.6),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: CustomIconWidget(
-                        iconName:
-                        _passwordVisible ? 'visibility' : 'visibility_off',
+                  // Email Input
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      labelText: 'Email Address',
+                      hintText: 'Enter your email',
+                      prefixIcon: CustomIconWidget(
+                        iconName: 'mail_outline',
                         color: Theme.of(context)
                             .colorScheme
                             .onSurface
                             .withOpacity(0.6),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _passwordVisible = !_passwordVisible;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.surface,
-                    contentPadding:
-                    EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
-                    errorStyle: TextStyle(color: Colors.red),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters long';
-                    }
-                    return null;
-                  },
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-
-                SizedBox(height: 2.h),
-
-                // Remember Me Checkbox and Forgot Password
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Remember Me Checkbox
-                    Row(
-                      children: [
-                        Theme(
-                          data: Theme.of(context).copyWith(
-                            checkboxTheme: CheckboxThemeData(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ),
-                          child: Checkbox(
-                            value: _rememberMe,
-                            onChanged: _isLoading ? null : (bool? value) {
-                              setState(() {
-                                _rememberMe = value ?? false;
-                              });
-                            },
-                            activeColor: Theme.of(context).colorScheme.primary,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        ),
-                        SizedBox(width: 1.w),
-                        GestureDetector(
-                          onTap: _isLoading ? null : () {
-                            setState(() {
-                              _rememberMe = !_rememberMe;
-                            });
-                          },
-                          child: Text(
-                            'Remember Me',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.8),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Forgot Password
-                    TextButton(
-                      onPressed: _isLoading ? null : _handleForgotPassword,
-                      child: Text(
-                        'Forgot Password?',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
                       ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding:
+                      EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+                      errorStyle: TextStyle(color: Colors.red),
                     ),
-                  ],
-                ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                          .hasMatch(value.trim())) {
+                        return 'Please enter a valid email address';
+                      }
+                      return null;
+                    },
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
 
-                SizedBox(height: 2.h),
+                  SizedBox(height: 2.h),
 
-                // Error Message
-                if (_errorMessage != null)
-                  Padding(
-                    padding: EdgeInsets.only(bottom: 2.h),
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(2.h),
-                      decoration: BoxDecoration(
+                  // Password Input
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: !_passwordVisible,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                      prefixIcon: CustomIconWidget(
+                        iconName: 'lock_outline',
                         color: Theme.of(context)
                             .colorScheme
-                            .error
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+                            .onSurface
+                            .withOpacity(0.6),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: CustomIconWidget(
+                          iconName:
+                          _passwordVisible ? 'visibility' : 'visibility_off',
                           color: Theme.of(context)
                               .colorScheme
-                              .error
-                              .withOpacity(0.3),
+                              .onSurface
+                              .withOpacity(0.6),
                         ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
                       ),
-                      child: Row(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding:
+                      EdgeInsets.symmetric(vertical: 2.h, horizontal: 4.w),
+                      errorStyle: TextStyle(color: Colors.red),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters long';
+                      }
+                      return null;
+                    },
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  // Remember Me Checkbox and Forgot Password
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Remember Me Checkbox
+                      Row(
                         children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: Colors.red,
-                            size: 20,
+                          Theme(
+                            data: Theme.of(context).copyWith(
+                              checkboxTheme: CheckboxThemeData(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                            child: Checkbox(
+                              value: _rememberMe,
+                              onChanged: _isLoading ? null : (bool? value) {
+                                setState(() {
+                                  _rememberMe = value ?? false;
+                                });
+                              },
+                              activeColor: Theme.of(context).colorScheme.primary,
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
-                          SizedBox(width: 2.w),
-                          Expanded(
+                          SizedBox(width: 1.w),
+                          GestureDetector(
+                            onTap: _isLoading ? null : () {
+                              setState(() {
+                                _rememberMe = !_rememberMe;
+                              });
+                            },
                             child: Text(
-                              _errorMessage!,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                color: Colors.red,
+                              'Remember Me',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
 
-                // Login Button
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    disabledBackgroundColor:
-                    Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding:
-                    EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
-                    minimumSize: Size(double.infinity, 6.h),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? SizedBox(
-                    width: 3.h,
-                    height: 3.h,
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : Text(
-                    'Login',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 4.h),
-
-                // Don't have an account? Sign Up
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Don't have an account?",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.7),
+                      // Forgot Password
+                      TextButton(
+                        onPressed: _isLoading ? null : _handleForgotPassword,
+                        child: Text(
+                          'Forgot Password?',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () {
-                        Navigator.pushNamed(
-                            context, AppRoutes.registerScreen);
-                      },
-                      child: Text(
-                        'Sign Up',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                    ],
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  // Error Message
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 2.h),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(2.h),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .error
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .error
+                                .withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            SizedBox(width: 2.w),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                  color: Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
 
-                SizedBox(height: 2.h),
-              ],
+                  // Login Button
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      disabledBackgroundColor:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding:
+                      EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
+                      minimumSize: Size(double.infinity, 6.h),
+                      elevation: 0,
+                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                      width: 3.h,
+                      height: 3.h,
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Text(
+                      'Login',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 4.h),
+
+                  // Don't have an account? Sign Up
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account?",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.7),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                          Navigator.pushNamed(
+                              context, AppRoutes.registerScreen);
+                        },
+                        child: Text(
+                          'Sign Up',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 2.h),
+                ],
+              ),
             ),
           ),
         ),

@@ -161,15 +161,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       children: [
         // Reading Preferences
-        SettingsSectionWidget(
-          title: "Reading Preferences",
-          children: [
-            _buildTextSizeSlider(),
-            _buildThemeSelector(),
-            _buildReadingModeSelector(),
-          ],
-        ),
-        SizedBox(height: 2.h),
+        // SettingsSectionWidget(
+        //   title: "Reading Preferences",
+        //   children: [
+        //     _buildTextSizeSlider(),
+        //     _buildThemeSelector(),
+        //     _buildReadingModeSelector(),
+        //   ],
+        // ),
+        // SizedBox(height: 2.h),
         // Notifications
         // SettingsSectionWidget(
         //   title: "Notifications",

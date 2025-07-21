@@ -399,8 +399,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _authService.signOut();
       if (mounted) {
         ToastHelper.showSuccess(context, 'Signed out successfully');
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/login-screen', (route) => false);
+        Navigator.pushNamed(context, AppRoutes.initial);
       }
     } catch (e) {
       if (mounted) {
@@ -562,6 +561,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.symmetric(vertical: 1.h),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: _filteredFeedItems.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= _filteredFeedItems.length) {

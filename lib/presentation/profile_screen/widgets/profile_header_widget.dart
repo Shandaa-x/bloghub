@@ -44,7 +44,7 @@ class ProfileHeaderWidget extends StatelessWidget {
                 ),
                 child: ClipOval(
                   child: CustomImageWidget(
-                    imageUrl: userData["avatar"] as String,
+                    imageUrl: userData["avatar"] as String ?? '',
                     width: 25.w,
                     height: 25.w,
                     fit: BoxFit.cover,
