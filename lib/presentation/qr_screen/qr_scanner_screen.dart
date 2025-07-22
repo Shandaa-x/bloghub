@@ -11,6 +11,8 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen> {
   MobileScannerController cameraController = MobileScannerController();
 
+  String? _errorMessage;
+
   @override
   void dispose() {
     cameraController.dispose();
