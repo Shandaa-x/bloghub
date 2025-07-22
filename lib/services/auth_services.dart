@@ -80,7 +80,7 @@ class AuthService {
     try {
       print('🔄 Creating Firestore document for user: ${user.uid}');
 
-      // Comprehensive user data
+      // Comprehensive user  data
       final userData = {
         // Basic Information
         'uid': user.uid,

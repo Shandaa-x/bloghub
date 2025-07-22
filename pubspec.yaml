@@ -17,6 +17,8 @@ dependencies:
   google_fonts: ^6.1.0
   image_picker: ^1.1.2
 
+  mobile_scanner: ^5.1.1
+
   flutter_launcher_icons: ^0.14.4
   # Firebase - Compatible versions
   firebase_core: ^2.27.0

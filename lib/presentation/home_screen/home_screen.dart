@@ -23,9 +23,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
 
   DocumentSnapshot? _lastDocument;
+  DocumentSnapshot? _lastCommentDocument;
   bool _hasMore = true;
   bool _isLoadingMore = false;
-  final int _perPage = 3;
+  final int _perPage = 2;
 
   late ScrollController _scrollController;
 
@@ -89,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      _fetchMoreBlogPosts();
+      _fetchMoreFeedItems();
     }
   }
 
@@ -98,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _isLoading = true;
       _hasMore = true;
       _lastDocument = null;
+      _lastCommentDocument = null; // Reset comment document as well
     });
 
     try {
@@ -120,15 +122,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
       final allItems = [...blogPosts, ...comments];
 
-      allItems.sort((a, b) =>
-          (b['publishDate'] ?? b['createdAt'])
-              .compareTo(a['publishDate'] ?? a['createdAt']));
+      allItems.sort((a, b) => (b['publishDate'] ?? b['createdAt'])
+          .compareTo(a['publishDate'] ?? a['createdAt']));
 
       setState(() {
         _blogPosts = allItems;
-        _lastDocument = blogSnapshot.docs.isNotEmpty
-            ? blogSnapshot.docs.last
-            : null; // You can store both blog and comment last docs for paging
+        if (blogSnapshot.docs.isNotEmpty) {
+          _lastDocument = blogSnapshot.docs.last;
+        }
+        if (commentSnapshot.docs.isNotEmpty) {
+          _lastCommentDocument = commentSnapshot.docs.last;
+        }
         _hasMore = blogSnapshot.docs.length == _perPage ||
             commentSnapshot.docs.length == _perPage;
       });
@@ -144,35 +148,56 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _fetchMoreBlogPosts() async {
-    if (!_hasMore || _isLoadingMore || _isLoading || _lastDocument == null)
-      return;
+  Future<void> _fetchMoreFeedItems() async {
+    if (!_hasMore || _isLoadingMore || _isLoading) return;
 
     setState(() => _isLoadingMore = true);
 
     try {
-      final query = FirebaseFirestore.instance
+      // Create queries for both collections
+      var blogQuery = FirebaseFirestore.instance
           .collection('blog_posts')
           .where('isPublished', isEqualTo: true)
           .orderBy('publishDate', descending: true)
-          .startAfterDocument(_lastDocument!)
           .limit(_perPage);
 
-      final snapshot = await query.get();
+      var commentQuery = FirebaseFirestore.instance
+          .collection('comments')
+          .orderBy('createdAt', descending: true)
+          .limit(_perPage);
 
-      final posts = snapshot.docs.map((doc) => _mapPost(doc)).toList();
+      if (_lastDocument != null) {
+        blogQuery = blogQuery.startAfterDocument(_lastDocument!);
+      }
+      if (_lastCommentDocument != null) {
+        commentQuery = commentQuery.startAfterDocument(_lastCommentDocument!);
+      }
+
+      final blogSnapshot = await blogQuery.get();
+      final commentSnapshot = await commentQuery.get();
+
+      final newBlogPosts = blogSnapshot.docs.map(_mapPost).toList();
+      final newComments = commentSnapshot.docs.map(_mapComment).toList();
+
+      final allNewItems = [...newBlogPosts, ...newComments];
+      allNewItems.sort((a, b) => (b['publishDate'] ?? b['createdAt'])
+          .compareTo(a['publishDate'] ?? a['createdAt']));
 
       setState(() {
-        _blogPosts.addAll(posts);
-        if (snapshot.docs.isNotEmpty) {
-          _lastDocument = snapshot.docs.last;
+        _blogPosts.addAll(allNewItems);
+        if (blogSnapshot.docs.isNotEmpty) {
+          _lastDocument = blogSnapshot.docs.last;
         }
-        _hasMore = snapshot.docs.length == _perPage;
+        if (commentSnapshot.docs.isNotEmpty) {
+          _lastCommentDocument = commentSnapshot.docs.last;
+        }
+        _hasMore = blogSnapshot.docs.length == _perPage ||
+            commentSnapshot.docs.length == _perPage;
       });
     } catch (e) {
-      debugPrint("🔥 Error loading more posts: $e");
+      debugPrint("🔥 Error loading more items: $e");
       if (mounted) {
-        ToastHelper.showError(context, 'Failed to load more posts');
+        ToastHelper.showError(context, 'Failed to load more items');
       }
     } finally {
       if (mounted) {

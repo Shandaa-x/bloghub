@@ -33,7 +33,7 @@ android {
         applicationId = "com.bloghub.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = 21
         // CHANGED: Updated from flutter.minSdkVersion to 23 (required for Firebase Auth)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

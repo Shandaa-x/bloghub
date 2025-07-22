@@ -1,5 +1,6 @@
 import 'package:bloghub/presentation/home_screen/home_screen.dart';
 import 'package:bloghub/presentation/profile_screen/profile_screen.dart';
+import 'package:bloghub/presentation/qr_screen/qr_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../routes/app_routes.dart';
@@ -18,7 +19,7 @@ class _BottomNavState extends State<BottomNav> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const HomeScreen(),
+    const QRScanScreen(),
     const HomeScreen(),
     const ProfileScreen(),
   ];
@@ -44,8 +45,8 @@ class _BottomNavState extends State<BottomNav> {
           ),
           BottomNavigationBarItem(
             icon: CustomIconWidget(
-                iconName: 'search', color: _navColor(1), size: 24),
-            label: 'Search',
+                iconName: 'qr_code', color: _navColor(1), size: 24),
+            label: 'Qr',
           ),
           BottomNavigationBarItem(
             icon: CustomIconWidget(
