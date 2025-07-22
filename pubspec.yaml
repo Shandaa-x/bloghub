@@ -16,7 +16,7 @@ dependencies:
   fl_chart: ^0.65.0
   google_fonts: ^6.1.0
   image_picker: ^1.1.2
-  mobile_scanner: ^7.0.1
+  mobile_scanner: ^5.1.1
   flutter_launcher_icons: ^0.14.4
 
   # Firebase - Updated to resolve gRPC-Core template errors with Xcode 16+

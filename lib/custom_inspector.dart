@@ -7,14 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:web/web.dart' as web;
 
-var backendURL =
-    "https://bloghub2303back.builtwithrocket.new/log-inspected-widget";
+var backendURL = "https://bloghub2303back.builtwithrocket.new/log-inspected-widget";
 
 class CustomWidgetInspector extends StatefulWidget {
   final Widget child;
 
-  const CustomWidgetInspector({Key? key, required this.child})
-      : super(key: key);
+  const CustomWidgetInspector({Key? key, required this.child}) : super(key: key);
 
   @override
   State<CustomWidgetInspector> createState() => _CustomWidgetInspectorState();
@@ -36,12 +34,10 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   }
 
   void _updateSelection(Offset position) {
-    final RenderObject? userRender =
-        _childKey.currentContext?.findRenderObject();
+    final RenderObject? userRender = _childKey.currentContext?.findRenderObject();
     if (userRender == null) return;
 
-    final RenderObject? target =
-        _findRenderObjectAtPosition(position, userRender);
+    final RenderObject? target = _findRenderObjectAtPosition(position, userRender);
 
     if (target != null && target != userRender) {
       if (_selectedRenderObject != target) {
@@ -112,12 +108,10 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
   void _handleHover(PointerHoverEvent event) {
     if (!isInspectorEnabled) return;
 
-    final RenderObject? userRender =
-        _childKey.currentContext?.findRenderObject();
+    final RenderObject? userRender = _childKey.currentContext?.findRenderObject();
     if (userRender == null) return;
 
-    final RenderObject? target =
-        _findRenderObjectAtPosition(event.position, userRender);
+    final RenderObject? target = _findRenderObjectAtPosition(event.position, userRender);
 
     if (target != null && target != userRender) {
       if (_selectedRenderObject != target) {
@@ -240,8 +234,7 @@ class _CustomWidgetInspectorState extends State<CustomWidgetInspector> {
     final List<DiagnosticsNode> children = object.debugDescribeChildren();
     for (int i = children.length - 1; i >= 0; i -= 1) {
       final DiagnosticsNode diagnostics = children[i];
-      if (diagnostics.style == DiagnosticsTreeStyle.offstage ||
-          diagnostics.value is! RenderObject) {
+      if (diagnostics.style == DiagnosticsTreeStyle.offstage || diagnostics.value is! RenderObject) {
         continue;
       }
       final RenderObject child = diagnostics.value! as RenderObject;
@@ -317,8 +310,7 @@ class _InspectorOverlayPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _InspectorOverlayPainter oldDelegate) {
-    return selectedRenderObject != oldDelegate.selectedRenderObject ||
-        selectedElement != oldDelegate.selectedElement;
+    return selectedRenderObject != oldDelegate.selectedRenderObject || selectedElement != oldDelegate.selectedElement;
   }
 }
 
@@ -353,8 +345,7 @@ String _getWidgetLocation(Element element) {
     'Center',
     'Expanded',
   };
-  String widgetTypeName =
-      element.widget.runtimeType.toString().split('<').first;
+  String widgetTypeName = element.widget.runtimeType.toString().split('<').first;
   if (wrapperWidgetTypeNames.contains(widgetTypeName)) {
     Element? childElement;
     element.visitChildren((child) {
@@ -380,11 +371,7 @@ String _getWidgetLocation(Element element) {
     if (json.containsKey('creationLocation')) {
       final Map creationLocation = json['creationLocation'] as Map;
       final String filePath = creationLocation['file']?.toString() ?? '';
-      if (filePath.isNotEmpty &&
-          !filePath.contains('/packages/flutter') &&
-          !filePath.contains('pub.dev') &&
-          !filePath.contains('/custom') &&
-          !filePath.contains('/common')) {
+      if (filePath.isNotEmpty && !filePath.contains('/packages/flutter') && !filePath.contains('pub.dev') && !filePath.contains('/custom') && !filePath.contains('/common')) {
         final String fileName = filePath.split("/").last;
         final String line = creationLocation['line']?.toString() ?? '0';
         final String column = creationLocation['column']?.toString() ?? '0';
@@ -429,8 +416,7 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
   };
   // If the current widget is a wrapper and has an immediate child, use that child.
   Widget effectiveWidget = currentWidget;
-  String widgetTypeName =
-      effectiveWidget.runtimeType.toString().split('<').first;
+  String widgetTypeName = effectiveWidget.runtimeType.toString().split('<').first;
   if (wrapperWidgetTypeNames.contains(widgetTypeName)) {
     // This finds only immediate child.
     Widget? immediateChild;
@@ -456,13 +442,9 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
     final appBarWidget = _findWidgetOfTypeInAncestors<AppBar>(element);
     if (appBarWidget is AppBar) {
       properties['type'] = 'AppBar';
-      properties['backgroundColor'] = appBarWidget.backgroundColor != null
-          ? colorToHex(appBarWidget.backgroundColor!)
-          : 'null';
+      properties['backgroundColor'] = appBarWidget.backgroundColor != null ? colorToHex(appBarWidget.backgroundColor!) : 'null';
       properties['centerTitle'] = appBarWidget.centerTitle.toString();
-      properties['foregroundColor'] = appBarWidget.foregroundColor != null
-          ? colorToHex(appBarWidget.foregroundColor!)
-          : 'null';
+      properties['foregroundColor'] = appBarWidget.foregroundColor != null ? colorToHex(appBarWidget.foregroundColor!) : 'null';
       properties['elevation'] = appBarWidget.elevation.toString();
       final Widget? title = appBarWidget.title;
       if (title is Text) {
@@ -473,19 +455,15 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
       return properties;
     }
     // Check for ElevatedButton or OutlinedButton in children or ancestors.
-    final buttonWidget =
-        _findWidgetOfTypeInAncestors<ElevatedButton>(element) ??
-            _findWidgetOfTypeInAncestors<OutlinedButton>(element);
+    final buttonWidget = _findWidgetOfTypeInAncestors<ElevatedButton>(element) ?? _findWidgetOfTypeInAncestors<OutlinedButton>(element);
     if (buttonWidget != null) {
       properties['type'] = buttonWidget.runtimeType.toString();
       if (buttonWidget is ElevatedButton) {
-        properties['backgroundColor'] =
-            widgetStatePropertyToResolvedValues<Color?>(
+        properties['backgroundColor'] = widgetStatePropertyToResolvedValues<Color?>(
           buttonWidget.style?.backgroundColor,
           (color) => colorToHex(color!),
         );
-        properties['foregroundColor'] =
-            widgetStatePropertyToResolvedValues<Color?>(
+        properties['foregroundColor'] = widgetStatePropertyToResolvedValues<Color?>(
           buttonWidget.style?.foregroundColor,
           (color) => colorToHex(color!),
         );
@@ -497,13 +475,11 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
           buttonWidget.style?.shadowColor,
           (color) => colorToHex(color!),
         );
-        properties['overlayColor'] =
-            widgetStatePropertyToResolvedValues<Color?>(
+        properties['overlayColor'] = widgetStatePropertyToResolvedValues<Color?>(
           buttonWidget.style?.overlayColor,
           (color) => colorToHex(color!),
         );
-        properties['textStyle'] =
-            widgetStatePropertyToResolvedValues<TextStyle?>(
+        properties['textStyle'] = widgetStatePropertyToResolvedValues<TextStyle?>(
           buttonWidget.style?.textStyle,
           (value) => value.toString(),
         );
@@ -511,13 +487,11 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
           buttonWidget.style?.elevation,
           (value) => value.toString(),
         );
-        properties['padding'] =
-            widgetStatePropertyToResolvedValues<EdgeInsetsGeometry?>(
+        properties['padding'] = widgetStatePropertyToResolvedValues<EdgeInsetsGeometry?>(
           buttonWidget.style?.padding,
           (value) => value.toString(),
         );
-        properties['shape'] =
-            widgetStatePropertyToResolvedValues<OutlinedBorder?>(
+        properties['shape'] = widgetStatePropertyToResolvedValues<OutlinedBorder?>(
           buttonWidget.style?.shape,
           (value) => value.toString(),
         );
@@ -553,9 +527,7 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
       spanProperties['style'] = getTextStyle(textSpan.style, element);
       // Recursively process children
       if (textSpan.children != null && textSpan.children!.isNotEmpty) {
-        spanProperties['children'] = textSpan.children!
-            .map((child) => extractTextSpanProperties(child as TextSpan))
-            .toList();
+        spanProperties['children'] = textSpan.children!.map((child) => extractTextSpanProperties(child as TextSpan)).toList();
       } else {
         spanProperties['children'] = [];
       }
@@ -574,33 +546,21 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
     properties['style'] = getTextStyle(textFieldWidget.style, element);
     final decoration = {
       'border': textFieldWidget.decoration?.border.toString() ?? 'null',
-      'enabledBorder':
-          textFieldWidget.decoration?.enabledBorder.toString() ?? 'null',
-      'focusedBorder':
-          textFieldWidget.decoration?.focusedBorder.toString() ?? 'null',
-      'disabledBorder':
-          textFieldWidget.decoration?.disabledBorder.toString() ?? 'null',
-      'errorBorder':
-          textFieldWidget.decoration?.errorBorder.toString() ?? 'null',
-      'focusedErrorBorder':
-          textFieldWidget.decoration?.focusedErrorBorder.toString() ?? 'null',
-      'fillColor': textFieldWidget.decoration?.fillColor != null
-          ? colorToHex(textFieldWidget.decoration!.fillColor!)
-          : 'null',
+      'enabledBorder': textFieldWidget.decoration?.enabledBorder.toString() ?? 'null',
+      'focusedBorder': textFieldWidget.decoration?.focusedBorder.toString() ?? 'null',
+      'disabledBorder': textFieldWidget.decoration?.disabledBorder.toString() ?? 'null',
+      'errorBorder': textFieldWidget.decoration?.errorBorder.toString() ?? 'null',
+      'focusedErrorBorder': textFieldWidget.decoration?.focusedErrorBorder.toString() ?? 'null',
+      'fillColor': textFieldWidget.decoration?.fillColor != null ? colorToHex(textFieldWidget.decoration!.fillColor!) : 'null',
       'filled': textFieldWidget.decoration?.filled.toString() ?? 'null',
       'hintText': textFieldWidget.decoration?.hintText.toString() ?? 'null',
       'hintStyle': getTextStyle(textFieldWidget.decoration?.hintStyle, element),
       'labelText': textFieldWidget.decoration?.labelText.toString() ?? 'null',
-      'labelStyle':
-          getTextStyle(textFieldWidget.decoration?.labelStyle, element),
+      'labelStyle': getTextStyle(textFieldWidget.decoration?.labelStyle, element),
       'prefixIcon': textFieldWidget.decoration?.prefixIcon.toString() ?? 'null',
-      'prefixIconConstraints':
-          textFieldWidget.decoration?.prefixIconConstraints.toString() ??
-              'null',
+      'prefixIconConstraints': textFieldWidget.decoration?.prefixIconConstraints.toString() ?? 'null',
       'suffixIcon': textFieldWidget.decoration?.suffixIcon.toString() ?? 'null',
-      'suffixIconConstraints':
-          textFieldWidget.decoration?.suffixIconConstraints.toString() ??
-              'null',
+      'suffixIconConstraints': textFieldWidget.decoration?.suffixIconConstraints.toString() ?? 'null',
       'counterText': textFieldWidget.decoration?.counterText.toString(),
     };
     properties['decoration'] = decoration;
@@ -635,21 +595,15 @@ Map<String, dynamic> _extractWidgetProperties(Element element) {
   properties['type'] = containerWidget.runtimeType.toString();
   properties['key'] = containerWidget.key?.toString() ?? 'null';
   if (containerWidget is Container) {
-    properties['color'] = containerWidget.color != null
-        ? colorToHex(containerWidget.color!)
-        : "null";
-    properties['width'] =
-        containerWidget.constraints?.maxWidth.toString() ?? 'null';
-    properties['height'] =
-        containerWidget.constraints?.maxHeight.toString() ?? 'null';
+    properties['color'] = containerWidget.color != null ? colorToHex(containerWidget.color!) : "null";
+    properties['width'] = containerWidget.constraints?.maxWidth.toString() ?? 'null';
+    properties['height'] = containerWidget.constraints?.maxHeight.toString() ?? 'null';
     properties['padding'] = containerWidget.padding?.toString() ?? 'null';
     properties['margin'] = containerWidget.margin?.toString() ?? 'null';
     if (containerWidget.decoration is BoxDecoration) {
       final boxDecoration = containerWidget.decoration as BoxDecoration;
       final decoration = {
-        'color': boxDecoration.color != null
-            ? colorToHex(boxDecoration.color!)
-            : "null",
+        'color': boxDecoration.color != null ? colorToHex(boxDecoration.color!) : "null",
         'border': boxDecoration.border.toString(),
         'borderRadius': boxDecoration.borderRadius.toString(),
         'boxShadow': boxDecoration.boxShadow.toString(),
@@ -692,52 +646,25 @@ Map<String, dynamic> getTextStyle(TextStyle? style, BuildContext context) {
   final defaultStyle = DefaultTextStyle.of(context).style;
 
   return {
-    'color': style?.color != null
-        ? colorToHex(style!.color!)
-        : (defaultStyle.color != null
-            ? colorToHex(defaultStyle.color!)
-            : 'null'),
-    'fontSize': style?.fontSize?.round().toString() ??
-        defaultStyle.fontSize?.round().toString() ??
-        'null',
-    'backgroundColor': style?.backgroundColor != null
-        ? colorToHex(style!.backgroundColor!)
-        : (defaultStyle.backgroundColor != null
-            ? colorToHex(defaultStyle.backgroundColor!)
-            : 'null'),
-    'fontWeight': style?.fontWeight?.toString() ??
-        defaultStyle.fontWeight?.toString() ??
-        'null',
-    'fontStyle': style?.fontStyle?.toString() ??
-        defaultStyle.fontStyle?.toString() ??
-        'null',
+    'color': style?.color != null ? colorToHex(style!.color!) : (defaultStyle.color != null ? colorToHex(defaultStyle.color!) : 'null'),
+    'fontSize': style?.fontSize?.round().toString() ?? defaultStyle.fontSize?.round().toString() ?? 'null',
+    'backgroundColor': style?.backgroundColor != null ? colorToHex(style!.backgroundColor!) : (defaultStyle.backgroundColor != null ? colorToHex(defaultStyle.backgroundColor!) : 'null'),
+    'fontWeight': style?.fontWeight?.toString() ?? defaultStyle.fontWeight?.toString() ?? 'null',
+    'fontStyle': style?.fontStyle?.toString() ?? defaultStyle.fontStyle?.toString() ?? 'null',
     'fontFamily': style?.fontFamily ?? defaultStyle.fontFamily ?? 'null',
-    'letterSpacing': style?.letterSpacing?.toString() ??
-        defaultStyle.letterSpacing?.toString() ??
-        'null',
-    'wordSpacing': style?.wordSpacing?.toString() ??
-        defaultStyle.wordSpacing?.toString() ??
-        'null',
-    'textBaseline': style?.textBaseline?.toString() ??
-        defaultStyle.textBaseline?.toString() ??
-        'null',
-    'height':
-        style?.height?.toString() ?? defaultStyle.height?.toString() ?? 'null',
-    'overflow': style?.overflow?.toString() ??
-        defaultStyle.overflow?.toString() ??
-        'null',
+    'letterSpacing': style?.letterSpacing?.toString() ?? defaultStyle.letterSpacing?.toString() ?? 'null',
+    'wordSpacing': style?.wordSpacing?.toString() ?? defaultStyle.wordSpacing?.toString() ?? 'null',
+    'textBaseline': style?.textBaseline?.toString() ?? defaultStyle.textBaseline?.toString() ?? 'null',
+    'height': style?.height?.toString() ?? defaultStyle.height?.toString() ?? 'null',
+    'overflow': style?.overflow?.toString() ?? defaultStyle.overflow?.toString() ?? 'null',
   };
 }
 
 String colorToHex(Color color) {
-  var alphaColor =
-      (color.a * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
-  var redColor =
-      (color.r * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
-  var greenColor =
-      (color.g * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
-  var blueColor =
-      (color.b * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+  var alphaColor = (color.a * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+  var redColor = (color.r * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+  var greenColor = (color.g * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
+  var blueColor = (color.b * 255).round().toRadixString(16).padLeft(2, '0').toUpperCase();
   return '0X$alphaColor$redColor$greenColor$blueColor';
 }
 
