@@ -1,16 +1,30 @@
+import 'dart:convert';
+
+import 'package:bloghub/presentation/qr_screen/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class QRScanScreen extends StatefulWidget {
-  const QRScanScreen({super.key});
+class QRScreen extends StatefulWidget {
+  const QRScreen({super.key});
 
   @override
-  State<QRScanScreen> createState() => _QRScanScreenState();
+  State<QRScreen> createState() => _QRScanScreenState();
 }
 
-class _QRScanScreenState extends State<QRScanScreen> {
-  String? _scannedCode;
+class AttendanceEntry {
+  final String date;
+  final String arrivedTime;
+  String? leftTime;
+  String? workedTime;
+
+  AttendanceEntry({required this.date, required this.arrivedTime});
+}
+
+class _QRScanScreenState extends State<QRScreen> {
+  List<AttendanceEntry> attendanceList = [];
   MobileScannerController cameraController = MobileScannerController();
+
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -22,92 +36,169 @@ class _QRScanScreenState extends State<QRScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR Code Scanner'),
+        title: const Text('Ирц бүртгэл', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blueAccent,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // Display scanned result
-            if (_scannedCode != null)
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
+      body: ListView.builder(
+        itemCount: attendanceList.length,
+        itemBuilder: (context, index) {
+          final entry = attendanceList[index];
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 5),
+                // Ирсэн row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Scanned QR Code:',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Text("${entry.date}, ${entry.arrivedTime}"),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green[300],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('Ирсэн', style: TextStyle(color: Colors.white)),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _scannedCode!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 18, color: Colors.deepPurple),
-                    ),
-                    const SizedBox(height: 20),
                   ],
                 ),
-              )
-            else
-              const Text(
-                'Press the button to scan a QR code',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-            const SizedBox(height: 30),
-            // Scan QR Code Button
-            ElevatedButton.icon(
-              onPressed: () {
-                _scanQRCode(context);
-              },
-              icon: const Icon(Icons.qr_code_scanner, size: 28),
-              label: const Text(
-                'Scan QR Code',
-                style: TextStyle(fontSize: 20),
-              ),
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, backgroundColor: Colors.blueAccent,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+                const SizedBox(height: 4),
+
+                // Явсан row
+                entry.leftTime != null
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("${entry.date}, ${entry.leftTime}"),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.purple[200],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text('Явсан', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      )
+                    : Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton(
+                          onPressed: () => _confirmLeaveDialog(index),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple[200],
+                          ),
+                          child: const Text('Явсан'),
+                        ),
+                      ),
+
+                // Worked time
+                if (entry.workedTime != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      children: [
+                        Text("Нийт ажилласан цаг: "),
+                        Text("${entry.workedTime}", style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+
+                const Divider(color: Colors.black, thickness: 1),
+              ],
             ),
-          ],
+          );
+        },
+      ),
+      floatingActionButton: InkWell(
+        onTap: () {
+          _scanQRCode(context);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent),
+          child: const Icon(Icons.qr_code, color: Colors.white),
         ),
       ),
     );
   }
 
-  /// Function to navigate to the scanner view
-  void _scanQRCode(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Scan QR Code'),
-            backgroundColor: Colors.blueAccent,
-          ),
-          body: MobileScanner(
-            controller: cameraController,
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final String? code = barcodes.first.rawValue;
-                if (code != null) {
-                  setState(() {
-                    _scannedCode = code;
-                  });
-                  // Stop the camera and pop the scanner screen
-                  cameraController.stop();
-                  Navigator.pop(context);
-                }
-              }
-            },
-          ),
-        ),
-      ),
+  void _confirmLeaveDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Баталгаажуулах'),
+          content: const Text('Та ажлаа орхихдоо итгэлтэй байна уу?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Үгүй'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // close dialog
+                _markAsLeft(index); // proceed with leave
+              },
+              child: const Text('Тийм'),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  void _scanQRCode(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+    );
+
+    if (result != null) {
+      try {
+        final data = json.decode(result);
+
+        if (data['error'] == 'Expired') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('QR код хүчингүй болсон байна')),
+          );
+
+          setState(() {
+            _errorMessage = data['message'];
+          });
+          return;
+        }
+
+        if (data['arrived'] == true) {
+          setState(() {
+            _errorMessage = null;
+            attendanceList.add(AttendanceEntry(
+              date: data['currentDate'],
+              arrivedTime: data['arrivedTime'],
+            ));
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('QR код хүчингүй болсон байна')),
+        );
+      }
+    }
+  }
+
+  void _markAsLeft(int index) {
+    final now = DateTime.now();
+    final entry = attendanceList[index];
+
+    final arrivedDateTime = DateTime.parse("${entry.date} ${entry.arrivedTime}");
+    final workedDuration = now.difference(arrivedDateTime);
+    final formattedWorkedTime = "${workedDuration.inHours}ц ${workedDuration.inMinutes.remainder(60)}мин";
+
+    setState(() {
+      entry.leftTime = "${now.hour}:${now.minute}:${now.second}";
+      entry.workedTime = formattedWorkedTime;
+    });
   }
 }
