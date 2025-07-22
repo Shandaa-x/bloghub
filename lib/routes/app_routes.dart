@@ -35,7 +35,7 @@ class AppRoutes {
     bottomNav: (context) => const BottomNav(),
     myBlogsScreen: (context) => const MyBlogsScreen(),
     addComment: (context) => const AddCommentScreen(),
-    qrScreen: (context) => const QRScanScreen(),
+    qrScreen: (context) => const QRScreen(),
     editBlogsScreen: (context) {
       final post =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;

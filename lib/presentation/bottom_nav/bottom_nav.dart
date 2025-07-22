@@ -19,7 +19,7 @@ class _BottomNavState extends State<BottomNav> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const QRScanScreen(),
+    const QRScreen(),
     const HomeScreen(),
     const ProfileScreen(),
   ];
