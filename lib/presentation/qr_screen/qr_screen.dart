@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:bloghub/presentation/qr_screen/qr_scanner_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -39,7 +40,14 @@ class _QRScanScreenState extends State<QRScreen> {
         title: const Text('Ирц бүртгэл', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blueAccent,
       ),
-      body: ListView.builder(
+      body: attendanceList.isEmpty ?
+          const Center(
+            child: Text(
+              'Ирц бүртгэл байхгүй байна',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+          ) :
+      ListView.builder(
         itemCount: attendanceList.length,
         itemBuilder: (context, index) {
           final entry = attendanceList[index];
@@ -162,9 +170,8 @@ class _QRScanScreenState extends State<QRScreen> {
 
         if (data['error'] == 'Expired') {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('QR код хүчингүй болсон байна')),
+            const SnackBar(content: Text('QR код хүчингүй болсон байна')),
           );
-
           setState(() {
             _errorMessage = data['message'];
           });
@@ -172,23 +179,36 @@ class _QRScanScreenState extends State<QRScreen> {
         }
 
         if (data['arrived'] == true) {
+          AttendanceEntry entry = AttendanceEntry(
+            date: data['currentDate'],
+            arrivedTime: data['arrivedTime'],
+          );
+
           setState(() {
             _errorMessage = null;
-            attendanceList.add(AttendanceEntry(
-              date: data['currentDate'],
-              arrivedTime: data['arrivedTime'],
-            ));
+            attendanceList.add(entry);
+          });
+
+          // 🔥 Save to Firestore
+          await FirebaseFirestore.instance.collection('attendance').add({
+            'arrived': true,
+            'currentDate': data['currentDate'],
+            'arrivedTime': data['arrivedTime'],
+            'expiresAt': data['expiresAt'],
+            'leftTime': null,
+            'workedTime': null,
+            'createdAt': FieldValue.serverTimestamp(),
           });
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('QR код хүчингүй болсон байна')),
+          const SnackBar(content: Text('QR код хүчингүй болсон байна')),
         );
       }
     }
   }
 
-  void _markAsLeft(int index) {
+  void _markAsLeft(int index) async {
     final now = DateTime.now();
     final entry = attendanceList[index];
 
@@ -196,9 +216,23 @@ class _QRScanScreenState extends State<QRScreen> {
     final workedDuration = now.difference(arrivedDateTime);
     final formattedWorkedTime = "${workedDuration.inHours}ц ${workedDuration.inMinutes.remainder(60)}мин";
 
+    final leftTime = "${now.hour}:${now.minute}:${now.second}";
+
     setState(() {
-      entry.leftTime = "${now.hour}:${now.minute}:${now.second}";
+      entry.leftTime = leftTime;
       entry.workedTime = formattedWorkedTime;
     });
+
+    // 🔥 Find the correct Firestore document to update
+    final snapshot = await FirebaseFirestore.instance.collection('attendance').where('currentDate', isEqualTo: entry.date).where('arrivedTime', isEqualTo: entry.arrivedTime).limit(1).get();
+
+    if (snapshot.docs.isNotEmpty) {
+      final docId = snapshot.docs.first.id;
+
+      await FirebaseFirestore.instance.collection('attendance').doc(docId).update({
+        'leftTime': leftTime,
+        'workedTime': formattedWorkedTime,
+      });
+    }
   }
 }
