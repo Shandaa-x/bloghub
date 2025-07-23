@@ -3,6 +3,7 @@ import 'package:bloghub/presentation/add_blog_screen/add_blog_screen.dart';
 import 'package:bloghub/presentation/add_blog_screen/add_comment_screen.dart';
 import 'package:bloghub/presentation/bottom_nav/bottom_nav.dart';
 import 'package:bloghub/presentation/edit_blog_screen/edit_blog_screen.dart';
+import 'package:bloghub/presentation/location_screen/location_screen.dart';
 import 'package:bloghub/presentation/my_blogs_screen/my_blogs_screen.dart';
 import 'package:bloghub/presentation/qr_screen/qr_screen.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class AppRoutes {
   static const String editBlogsScreen = '/edit-blogs-screen';
   static const String addComment = '/add-comment-screen';
   static const String qrScreen = '/qr-screen';
+  static const String locationScreen = '/location-screen';
 
   static Map<String, WidgetBuilder> routes = {
     initial: (context) => const LoginScreen(),
@@ -36,6 +38,7 @@ class AppRoutes {
     myBlogsScreen: (context) => const MyBlogsScreen(),
     addComment: (context) => const AddCommentScreen(),
     qrScreen: (context) => const QRScreen(),
+    locationScreen: (context) => const LocationScreen(),
     editBlogsScreen: (context) {
       final post =
           ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;

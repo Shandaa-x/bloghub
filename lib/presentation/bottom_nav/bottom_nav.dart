@@ -1,4 +1,5 @@
 import 'package:bloghub/presentation/home_screen/home_screen.dart';
+import 'package:bloghub/presentation/location_screen/location_screen.dart';
 import 'package:bloghub/presentation/profile_screen/profile_screen.dart';
 import 'package:bloghub/presentation/qr_screen/qr_screen.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class _BottomNavState extends State<BottomNav> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const QRScreen(),
-    const HomeScreen(),
+    const LocationScreen(),
     const ProfileScreen(),
   ];
 
@@ -50,8 +51,8 @@ class _BottomNavState extends State<BottomNav> {
           ),
           BottomNavigationBarItem(
             icon: CustomIconWidget(
-                iconName: 'bookmark', color: _navColor(2), size: 24),
-            label: 'Bookmarks',
+                iconName: 'location_on', color: _navColor(2), size: 24),
+            label: 'Location',
           ),
           BottomNavigationBarItem(
             icon: CustomIconWidget(
