@@ -6,7 +6,6 @@ import 'package:sizer/sizer.dart';
 import '../../core/app_export.dart';
 import '../../services/auth_services.dart';
 import '../../theme/toast_helper.dart';
-import '../../widgets/custom_icon_widget.dart';
 import './widgets/profile_header_widget.dart';
 import './widgets/reading_stats_widget.dart';
 import './widgets/settings_section_widget.dart';
@@ -130,6 +129,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text("Profile", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

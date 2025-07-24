@@ -69,15 +69,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     };
   }
 
-  final List<String> _categories = [
-    'All',
-    'Technology',
-    'Lifestyle',
-    'Design',
-    'Business',
-    'Health',
-    'Finance'
-  ];
+  final List<String> _categories = ['All', 'Technology', 'Lifestyle', 'Design', 'Business', 'Health', 'Finance'];
 
   @override
   void initState() {
@@ -88,8 +80,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       _fetchMoreFeedItems();
     }
   }
@@ -103,16 +94,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
 
     try {
-      final blogQuery = FirebaseFirestore.instance
-          .collection('blog_posts')
-          .where('isPublished', isEqualTo: true)
-          .orderBy('publishDate', descending: true)
-          .limit(_perPage);
+      final blogQuery = FirebaseFirestore.instance.collection('blog_posts').where('isPublished', isEqualTo: true).orderBy('publishDate', descending: true).limit(_perPage);
 
-      final commentQuery = FirebaseFirestore.instance
-          .collection('comments')
-          .orderBy('createdAt', descending: true)
-          .limit(_perPage);
+      final commentQuery = FirebaseFirestore.instance.collection('comments').orderBy('createdAt', descending: true).limit(_perPage);
 
       final blogSnapshot = await blogQuery.get();
       final commentSnapshot = await commentQuery.get();
@@ -122,8 +106,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
       final allItems = [...blogPosts, ...comments];
 
-      allItems.sort((a, b) => (b['publishDate'] ?? b['createdAt'])
-          .compareTo(a['publishDate'] ?? a['createdAt']));
+      allItems.sort((a, b) => (b['publishDate'] ?? b['createdAt']).compareTo(a['publishDate'] ?? a['createdAt']));
 
       setState(() {
         _blogPosts = allItems;
@@ -133,8 +116,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (commentSnapshot.docs.isNotEmpty) {
           _lastCommentDocument = commentSnapshot.docs.last;
         }
-        _hasMore = blogSnapshot.docs.length == _perPage ||
-            commentSnapshot.docs.length == _perPage;
+        _hasMore = blogSnapshot.docs.length == _perPage || commentSnapshot.docs.length == _perPage;
       });
     } catch (e) {
       debugPrint("🔥 Error fetching feed: $e");
@@ -155,16 +137,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     try {
       // Create queries for both collections
-      var blogQuery = FirebaseFirestore.instance
-          .collection('blog_posts')
-          .where('isPublished', isEqualTo: true)
-          .orderBy('publishDate', descending: true)
-          .limit(_perPage);
+      var blogQuery = FirebaseFirestore.instance.collection('blog_posts').where('isPublished', isEqualTo: true).orderBy('publishDate', descending: true).limit(_perPage);
 
-      var commentQuery = FirebaseFirestore.instance
-          .collection('comments')
-          .orderBy('createdAt', descending: true)
-          .limit(_perPage);
+      var commentQuery = FirebaseFirestore.instance.collection('comments').orderBy('createdAt', descending: true).limit(_perPage);
 
       if (_lastDocument != null) {
         blogQuery = blogQuery.startAfterDocument(_lastDocument!);
@@ -180,8 +155,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       final newComments = commentSnapshot.docs.map(_mapComment).toList();
 
       final allNewItems = [...newBlogPosts, ...newComments];
-      allNewItems.sort((a, b) => (b['publishDate'] ?? b['createdAt'])
-          .compareTo(a['publishDate'] ?? a['createdAt']));
+      allNewItems.sort((a, b) => (b['publishDate'] ?? b['createdAt']).compareTo(a['publishDate'] ?? a['createdAt']));
 
       setState(() {
         _blogPosts.addAll(allNewItems);
@@ -191,8 +165,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (commentSnapshot.docs.isNotEmpty) {
           _lastCommentDocument = commentSnapshot.docs.last;
         }
-        _hasMore = blogSnapshot.docs.length == _perPage ||
-            commentSnapshot.docs.length == _perPage;
+        _hasMore = blogSnapshot.docs.length == _perPage || commentSnapshot.docs.length == _perPage;
       });
     } catch (e) {
       debugPrint("🔥 Error loading more items: $e");
@@ -247,9 +220,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Text(
                 'Create New',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
               ),
               SizedBox(height: 2.h),
 
@@ -270,15 +243,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 title: Text(
                   'Add Blog',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 subtitle: Text(
                   'Create a new blog post',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 trailing: CustomIconWidget(
                   iconName: 'arrow_forward_ios',
@@ -313,15 +286,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 title: Text(
                   'Add Comment',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 subtitle: Text(
                   'Write a comment on a post',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                 ),
                 trailing: CustomIconWidget(
                   iconName: 'arrow_forward_ios',
@@ -385,32 +358,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 children: [
                   Icon(Icons.logout, color: Colors.orange, size: 24),
                   SizedBox(width: 8),
-                  Text('Sign Out',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                  Text('Sign Out', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 ],
               ),
-              content: const Text(
-                  'Are you sure you want to sign out of BlogHub?',
-                  style: TextStyle(fontSize: 16)),
+              content: const Text('Are you sure you want to sign out of BlogHub?', style: TextStyle(fontSize: 16)),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('Cancel',
-                      style: TextStyle(
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500)),
+                  child: Text('Cancel', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w500)),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  child: const Text('Sign Out',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ],
             );
@@ -469,26 +433,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 color: Theme.of(context).colorScheme.primary,
                 size: 24,
               ),
-              title:
-                  Text(post['isBookmarked'] ? 'Remove Bookmark' : 'Bookmark'),
+              title: Text(post['isBookmarked'] ? 'Remove Bookmark' : 'Bookmark'),
               onTap: () {
                 _toggleBookmark(post['id']);
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              leading: CustomIconWidget(
-                  iconName: 'share',
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 24),
+              leading: CustomIconWidget(iconName: 'share', color: Theme.of(context).colorScheme.primary, size: 24),
               title: const Text('Share'),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: CustomIconWidget(
-                  iconName: 'watch_later',
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 24),
+              leading: CustomIconWidget(iconName: 'watch_later', color: Theme.of(context).colorScheme.primary, size: 24),
               title: const Text('Save for Later'),
               onTap: () => Navigator.pop(context),
             ),
@@ -504,43 +461,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          title: Text(
+            'BlogHub',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+          ),
+          actions: [
+            IconButton(
+              icon: CustomIconWidget(iconName: 'menu', color: Colors.white),
+              onPressed: () {},
+            ),
+          ],
+        ),
         body: SafeArea(
           child: Column(
             children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                        color: Theme.of(context).dividerColor, width: 0.5),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      'BlogHub',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                    ),
-                    const Spacer(),
-                    // IconButton(
-                    //   icon: CustomIconWidget(
-                    //       iconName: 'brightness_6',
-                    //       color: Theme.of(context).colorScheme.onSurface),
-                    //   onPressed: () {},
-                    // ),
-                    IconButton(
-                      icon: CustomIconWidget(
-                          iconName: 'menu',
-                          color: Theme.of(context).colorScheme.onSurface),
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              ),
               Container(
                 height: 6.h,
                 padding: const EdgeInsets.symmetric(vertical: 6),
@@ -552,8 +491,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     return CategoryChipWidget(
                       category: _categories[index],
                       isSelected: _selectedCategory == _categories[index],
-                      onTap: () => setState(
-                          () => _selectedCategory = _categories[index]),
+                      onTap: () => setState(() => _selectedCategory = _categories[index]),
                     );
                   },
                 ),
@@ -563,9 +501,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ? const Center(child: CircularProgressIndicator())
                     : RefreshIndicator(
                         onRefresh: _handleRefresh,
-                        child: _filteredFeedItems.isEmpty
-                            ? _buildNoBlogPostsWidget()
-                            : _buildFacebookStyleView(),
+                        child: _filteredFeedItems.isEmpty ? _buildNoBlogPostsWidget() : _buildFacebookStyleView(),
                       ),
               ),
             ],
@@ -573,10 +509,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showAddOptionsBottomSheet(context),
-          child: CustomIconWidget(
-              iconName: 'add',
-              color: Theme.of(context).colorScheme.onPrimary,
-              size: 24),
+          child: CustomIconWidget(iconName: 'add', color: Theme.of(context).colorScheme.onPrimary, size: 24),
         ),
       ),
     );
@@ -640,16 +573,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             'No Blog Posts Found',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color:
-                      Theme.of(context).colorScheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
           ),
           SizedBox(height: 1.h),
           Text(
             'Pull down to refresh',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
           ),
           SizedBox(height: 4.h),

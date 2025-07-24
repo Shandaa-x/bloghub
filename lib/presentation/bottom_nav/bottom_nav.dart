@@ -4,10 +4,8 @@ import 'package:bloghub/presentation/profile_screen/profile_screen.dart';
 import 'package:bloghub/presentation/qr_screen/qr_screen.dart';
 import 'package:flutter/material.dart';
 
-import '../../routes/app_routes.dart';
 import '../../widgets/custom_icon_widget.dart';
 
-// Main Bottom Navigation Widget
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
 
@@ -33,30 +31,29 @@ class _BottomNavState extends State<BottomNav> {
         children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
         currentIndex: _currentIndex,
         type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.white, // Selected label color
+        unselectedItemColor: Colors.white70, // Unselected label color
         onTap: (index) {
           setState(() => _currentIndex = index);
         },
         items: [
           BottomNavigationBarItem(
-            icon: CustomIconWidget(
-                iconName: 'home', color: _navColor(0), size: 24),
+            icon: CustomIconWidget(iconName: 'home', color: _navColor(0), size: 24),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: CustomIconWidget(
-                iconName: 'qr_code', color: _navColor(1), size: 24),
+            icon: CustomIconWidget(iconName: 'qr_code', color: _navColor(1), size: 24),
             label: 'Qr',
           ),
           BottomNavigationBarItem(
-            icon: CustomIconWidget(
-                iconName: 'location_on', color: _navColor(2), size: 24),
+            icon: CustomIconWidget(iconName: 'location_on', color: _navColor(2), size: 24),
             label: 'Location',
           ),
           BottomNavigationBarItem(
-            icon: CustomIconWidget(
-                iconName: 'person', color: _navColor(3), size: 24),
+            icon: CustomIconWidget(iconName: 'person', color: _navColor(3), size: 24),
             label: 'Profile',
           ),
         ],
@@ -65,8 +62,6 @@ class _BottomNavState extends State<BottomNav> {
   }
 
   Color _navColor(int index) {
-    return _currentIndex == index
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
+    return _currentIndex == index ? Colors.white : Colors.white70;
   }
 }

@@ -1,15 +1,17 @@
 import 'dart:convert';
 
 import 'package:bloghub/presentation/qr_screen/qr_scanner_screen.dart';
+import 'package:bloghub/presentation/qr_screen/weekly/week_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRScreen extends StatefulWidget {
   const QRScreen({super.key});
 
   @override
-  State<QRScreen> createState() => _QRScanScreenState();
+  State<QRScreen> createState() => _QRScreenState();
 }
 
 class AttendanceEntry {
@@ -17,19 +19,79 @@ class AttendanceEntry {
   final String arrivedTime;
   String? leftTime;
   String? workedTime;
+  final double? latitude;
+  final double? longitude;
+  final double? leftLatitude;
+  final double? leftLongitude;
 
-  AttendanceEntry({required this.date, required this.arrivedTime});
+  AttendanceEntry({
+    required this.date,
+    required this.arrivedTime,
+    this.latitude,
+    this.longitude,
+    this.leftLatitude,
+    this.leftLongitude,
+  });
 
-  DateTime get dateTime => DateTime.parse("$date $arrivedTime");
+  DateTime? get dateTime {
+    try {
+      return DateTime.parse("$date $arrivedTime");
+    } catch (e) {
+      // fallback: try to fix single-digit seconds
+      final fixedTime = _fixTimeFormat(arrivedTime);
+      try {
+        return DateTime.parse("$date $fixedTime");
+      } catch (e) {
+        return null;
+      }
+    }
+  }
+
+  String _fixTimeFormat(String? time) {
+    if (time == null) return '';
+    final parts = time.split(':');
+    if (parts.length == 3) {
+      parts[2] = parts[2].padLeft(2, '0');
+      return "${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}:${parts[2]}";
+    }
+    return time;
+  }
 }
 
-enum ViewMode { all, monthly, weekly }
+class WeekData {
+  final DateTime startDate;
+  final DateTime endDate;
+  final List<AttendanceEntry> entries;
+  final int totalMinutes;
+  final int uniqueDaysWorked;
 
-class _QRScanScreenState extends State<QRScreen> {
+  WeekData({
+    required this.startDate,
+    required this.endDate,
+    required this.entries,
+    required this.totalMinutes,
+    required this.uniqueDaysWorked,
+  });
+
+  String get weekTitle {
+    return "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - ${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+  }
+
+  String get totalWorkedTime {
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return "$hours цаг $minutes мин";
+  }
+}
+
+class _QRScreenState extends State<QRScreen> {
   List<AttendanceEntry> attendanceList = [];
-  MobileScannerController cameraController = MobileScannerController();
   bool isLoading = true;
-  ViewMode viewMode = ViewMode.all;
+  bool hasArrived = false;
+  String? arrivedDocId;
+  DateTime currentMonth = DateTime.now();
+  bool showLocationMap = false;
+  Position? currentPosition;
 
   @override
   void initState() {
@@ -37,315 +99,388 @@ class _QRScanScreenState extends State<QRScreen> {
     _fetchAttendanceData();
   }
 
-  @override
-  void dispose() {
-    cameraController.dispose();
-    super.dispose();
-  }
-
   Future<void> _fetchAttendanceData() async {
+    setState(() => isLoading = true);
     try {
-      setState(() => isLoading = true);
+      final startOfMonth = DateTime(currentMonth.year, currentMonth.month, 1);
+      final endOfMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0, 23, 59, 59);
 
-      final snapshot = await FirebaseFirestore.instance.collection('attendance').orderBy('createdAt', descending: true).get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('attendance')
+          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
+          .orderBy('createdAt', descending: true)
+          .get();
 
-      _updateAttendanceListFromSnapshot(snapshot);
-      viewMode = ViewMode.all;
+      _updateAttendanceList(snapshot);
     } catch (e) {
-      _handleFetchError(e);
+      _handleError('Ирцийн мэдээллийг ачааллахад алдаа гарлаа');
     }
   }
 
-  Future<void> _fetchWeeklyAttendance() async {
-    final now = DateTime.now();
-    final lastWeek = now.subtract(const Duration(days: 7));
-
-    try {
-      setState(() => isLoading = true);
-
-      final snapshot = await FirebaseFirestore.instance.collection('attendance').where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(lastWeek)).orderBy('createdAt', descending: true).get();
-
-      _updateAttendanceListFromSnapshot(snapshot);
-      viewMode = ViewMode.weekly;
-    } catch (e) {
-      _handleFetchError(e);
+  int parseWorkedTimeToMinutes(String workedTime) {
+    final regex = RegExp(r"(\d+)ц\s+(\d+)мин");
+    final match = regex.firstMatch(workedTime);
+    if (match != null) {
+      final hours = int.tryParse(match.group(1) ?? '0') ?? 0;
+      final minutes = int.tryParse(match.group(2) ?? '0') ?? 0;
+      return hours * 60 + minutes;
     }
+    return 0;
   }
 
-  Future<void> _fetchMonthlyAttendance() async {
-    final now = DateTime.now();
-    final lastMonth = DateTime(now.year, now.month - 1, now.day);
-
-    try {
-      setState(() => isLoading = true);
-
-      final snapshot = await FirebaseFirestore.instance.collection('attendance').where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(lastMonth)).orderBy('createdAt', descending: true).get();
-
-      _updateAttendanceListFromSnapshot(snapshot);
-      viewMode = ViewMode.monthly;
-    } catch (e) {
-      _handleFetchError(e);
+  String getMonthlyTotalWorkedTime() {
+    int totalMinutes = 0;
+    for (var e in attendanceList) {
+      if (e.workedTime != null) {
+        totalMinutes += parseWorkedTimeToMinutes(e.workedTime!);
+      }
     }
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return "$hours цаг $minutes мин";
   }
 
-  Map<String, List<AttendanceEntry>> _groupAttendance(ViewMode mode) {
-    Map<String, List<AttendanceEntry>> grouped = {};
-
+  int getWorkedDaysCount() {
+    // Count unique dates (worked days), not total entries
+    final uniqueDates = <String>{};
     for (var entry in attendanceList) {
-      final date = entry.dateTime;
-      String key;
+      uniqueDates.add(entry.date);
+    }
+    return uniqueDates.length;
+  }
 
-      if (mode == ViewMode.monthly) {
-        key = "${date.year}.${date.month.toString().padLeft(2, '0')}";
-      } else if (mode == ViewMode.weekly) {
-        final monday = date.subtract(Duration(days: date.weekday - 1));
-        final friday = monday.add(const Duration(days: 4));
-        key = "${monday.year}.${monday.month.toString().padLeft(2, '0')}.${monday.day.toString().padLeft(2, '0')} - "
-            "${friday.year}.${friday.month.toString().padLeft(2, '0')}.${friday.day.toString().padLeft(2, '0')}";
-      } else {
-        key = 'Бүгдийг харах';
+  List<WeekData> _groupByWeeks() {
+    final weeks = <WeekData>[];
+    final Map<String, List<AttendanceEntry>> weekGroups = {};
+
+    for (final entry in attendanceList) {
+      final date = entry.dateTime;
+      if (date != null) {
+        // Get the start of the week (Monday)
+        final weekStart = date.subtract(Duration(days: date.weekday - 1));
+        final weekStartFormatted = "${weekStart.year}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}";
+
+        weekGroups.putIfAbsent(weekStartFormatted, () => []).add(entry);
+      }
+    }
+
+    // Convert to WeekData objects
+    for (final entry in weekGroups.entries) {
+      final weekStart = DateTime.parse(entry.key);
+      final weekEnd = weekStart.add(const Duration(days: 6));
+
+      int totalMinutes = 0;
+      final uniqueDatesInWeek = <String>{};
+
+      for (final attendance in entry.value) {
+        // Count unique dates for worked days
+        uniqueDatesInWeek.add(attendance.date);
+
+        // Sum worked time
+        if (attendance.workedTime != null) {
+          totalMinutes += parseWorkedTimeToMinutes(attendance.workedTime!);
+        }
       }
 
-      grouped.putIfAbsent(key, () => []).add(entry);
+      weeks.add(WeekData(
+        startDate: weekStart,
+        endDate: weekEnd,
+        entries: entry.value,
+        totalMinutes: totalMinutes,
+        uniqueDaysWorked: uniqueDatesInWeek.length, // Add this field
+      ));
     }
 
-    return grouped;
+    // Sort weeks by start date (most recent first)
+    weeks.sort((a, b) => b.startDate.compareTo(a.startDate));
+    return weeks;
+  }
+
+  void _changeMonth(int monthOffset) {
+    final newMonth = DateTime(currentMonth.year, currentMonth.month + monthOffset, 1);
+
+    // Don't allow future months
+    final now = DateTime.now();
+    if (newMonth.isAfter(DateTime(now.year, now.month, 1))) {
+      return;
+    }
+
+    setState(() {
+      currentMonth = newMonth;
+    });
+    _fetchAttendanceData();
+  }
+
+  String get monthTitle {
+    final monthNames = [
+      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+    return "${monthNames[currentMonth.month - 1]} ${currentMonth.year}";
+  }
+
+  bool get canGoPreviousMonth {
+    // Check if there's attendance data in the previous month
+    // For now, just allow going back 12 months
+    final twelveMonthsAgo = DateTime.now().subtract(const Duration(days: 365));
+    return currentMonth.isAfter(twelveMonthsAgo);
+  }
+
+  Future<Position> _getLocation() async {
+    if (!await Geolocator.isLocationServiceEnabled()) throw Exception("GPS is disabled.");
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) {
+      throw Exception("Location permission not granted.");
+    }
+
+    return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
   @override
   Widget build(BuildContext context) {
+    final weeks = _groupByWeeks();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ирц бүртгэл', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blueAccent,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onSelected: (value) {
-              if (value == 'week') {
-                _fetchWeeklyAttendance();
-              } else if (value == 'month') {
-                _fetchMonthlyAttendance();
-              } else {
-                _fetchAttendanceData();
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'week', child: Text('7 хоногоор харах')),
-              PopupMenuItem(value: 'month', child: Text('Сараар харах')),
-              PopupMenuItem(value: 'all', child: Text('Бүгдийг харах')),
-            ],
-          ),
-        ],
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : attendanceList.isEmpty
-              ? const Center(child: Text('Ирц бүртгэл байхгүй байна'))
-              : RefreshIndicator(
-                  onRefresh: _fetchAttendanceData,
-                  child: ListView(
-                    children: _groupAttendance(viewMode).entries.map((entry) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            if (viewMode != ViewMode.all)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10, top: 2),
-                                child: Text(
-                                  entry.key,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                                ),
-                              ),
-                            ...entry.value.map((e) => _buildAttendanceEntry(e)).toList(),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
+          : Column(
+        children: [
+          // Month navigation
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: canGoPreviousMonth ? () => _changeMonth(-1) : null,
+                  icon: const Icon(Icons.chevron_left),
                 ),
-      floatingActionButton: InkWell(
-        onTap: () => _scanQRCode(context),
-        child: Container(
-          padding: const EdgeInsets.all(13),
-          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blueAccent),
-          child: const Icon(Icons.qr_code, color: Colors.white),
+                Text(
+                  monthTitle,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: currentMonth.month < DateTime.now().month || currentMonth.year < DateTime.now().year
+                      ? () => _changeMonth(1)
+                      : null,
+                  icon: const Icon(Icons.chevron_right),
+                ),
+              ],
+            ),
+          ),
+
+          // Monthly summary
+          _buildMonthlySummary(),
+
+          // Weeks list
+          Expanded(
+            child: attendanceList.isEmpty
+                ? const Center(child: Text('Энэ сард ирц байхгүй байна'))
+                : RefreshIndicator(
+              onRefresh: _fetchAttendanceData,
+              child: ListView.builder(
+                itemCount: weeks.length,
+                itemBuilder: (context, index) {
+                  return _buildWeekCard(weeks[index]);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(12),
+        child: ElevatedButton(
+          onPressed: hasArrived ? _markLeft : _markArrived,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: hasArrived ? Colors.purple : Colors.green,
+          ),
+          child: Text(hasArrived ? 'Явлаа' : 'Ирлээ', style: const TextStyle(color: Colors.white)),
         ),
       ),
     );
   }
 
-  Widget _buildAttendanceEntry(AttendanceEntry entry) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text("${entry.date}, ${entry.arrivedTime}"),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(color: Colors.green[300], borderRadius: BorderRadius.circular(4)),
-              child: const Text('Ирсэн', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        entry.leftTime != null
-            ? Row(
+  Widget _buildMonthlySummary() {
+    final total = getMonthlyTotalWorkedTime();
+    final daysWorked = getWorkedDaysCount();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${entry.date}, ${entry.leftTime}"),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.purple[200], borderRadius: BorderRadius.circular(4)),
-                    child: const Text('Явсан', style: TextStyle(color: Colors.white)),
-                  ),
+                  const Text('Сарын нийт ажилласан цаг:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(total, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
                 ],
-              )
-            : Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () => _confirmLeaveDialog(attendanceList.indexOf(entry)),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.purple[200]),
-                  child: const Text('Явсан'),
-                ),
               ),
-        if (entry.workedTime != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Ажилласан өдөр:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text('$daysWorked өдөр', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekCard(WeekData week) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WeekDetailScreen(weekData: week),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Нийт ажилласан цаг: "),
-                Text("${entry.workedTime}", style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  week.weekTitle,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Ажилласан өдөр: ${week.uniqueDaysWorked}',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    Text(
+                      week.totalWorkedTime,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: const [
+                    Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  ],
+                ),
               ],
             ),
           ),
-        const Divider(color: Colors.black, thickness: 1),
-      ],
+        ),
+      ),
     );
   }
 
-  void _updateAttendanceListFromSnapshot(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    final List<AttendanceEntry> fetchedList = snapshot.docs.map((doc) {
-      final data = doc.data();
-      return AttendanceEntry(
-        date: data['currentDate'] ?? '',
-        arrivedTime: data['arrivedTime'] ?? '',
-      )
-        ..leftTime = data['leftTime']
-        ..workedTime = data['workedTime'];
-    }).toList();
+  Future<void> _markArrived() async {
+    try {
+      final pos = await _getLocation();
+      final now = DateTime.now();
+      final date = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+      final time = _formatTime(now);
 
-    setState(() {
-      attendanceList = fetchedList;
-      isLoading = false;
-    });
-  }
-
-  void _handleFetchError(dynamic e) {
-    debugPrint('Error fetching attendance: $e');
-    setState(() => isLoading = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ирцийн мэдээллийг ачааллахад алдаа гарлаа')),
-      );
-    }
-  }
-
-  void _confirmLeaveDialog(int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Баталгаажуулах'),
-          content: const Text('Та ажлаа орхихдоо итгэлтэй байна уу?'),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Үгүй')),
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _markAsLeft(index);
-                },
-                child: const Text('Тийм')),
-          ],
-        );
-      },
-    );
-  }
-
-  void _scanQRCode(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const QRScannerScreen()),
-    );
-
-    if (result != null) {
-      try {
-        final data = json.decode(result);
-
-        if (data['error'] == 'Expired') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('QR код хүчингүй болсон байна')),
-          );
-          return;
-        }
-
-        if (data['arrived'] == true) {
-          await FirebaseFirestore.instance.collection('attendance').add({
-            'arrived': true,
-            'currentDate': data['currentDate'],
-            'arrivedTime': data['arrivedTime'],
-            'expiresAt': data['expiresAt'],
-            'leftTime': null,
-            'workedTime': null,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-          await _fetchAttendanceData();
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ирц амжилттай бүртгэгдлээ')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('QR код хүчингүй болсон байна')),
-        );
-      }
-    }
-  }
-
-  void _markAsLeft(int index) async {
-    final now = DateTime.now();
-    final entry = attendanceList[index];
-
-    final arrivedDateTime = DateTime.parse("${entry.date} ${entry.arrivedTime}");
-    final workedDuration = now.difference(arrivedDateTime);
-    final formattedWorkedTime = "${workedDuration.inHours}ц ${workedDuration.inMinutes.remainder(60)}мин";
-
-    final leftTime = "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
-
-    final snapshot = await FirebaseFirestore.instance.collection('attendance').where('currentDate', isEqualTo: entry.date).where('arrivedTime', isEqualTo: entry.arrivedTime).limit(1).get();
-
-    if (snapshot.docs.isNotEmpty) {
-      final docId = snapshot.docs.first.id;
-
-      await FirebaseFirestore.instance.collection('attendance').doc(docId).update({
-        'leftTime': leftTime,
-        'workedTime': formattedWorkedTime,
+      final doc = await FirebaseFirestore.instance.collection('attendance').add({
+        'arrived': true,
+        'currentDate': date,
+        'arrivedTime': time,
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       setState(() {
-        entry.leftTime = leftTime;
-        entry.workedTime = formattedWorkedTime;
+        hasArrived = true;
+        arrivedDocId = doc.id;
+        currentPosition = pos;
+        showLocationMap = true;
+      });
+      _fetchAttendanceData();
+    } catch (e) {
+      _handleError(e.toString());
+    }
+  }
+
+  String _formatTime(DateTime dt) {
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}";
+  }
+
+  Future<void> _markLeft() async {
+    if (arrivedDocId == null) return;
+
+    try {
+      final pos = await _getLocation();
+      final now = DateTime.now();
+      final time = _formatTime(now);
+
+      final doc = await FirebaseFirestore.instance.collection('attendance').doc(arrivedDocId!).get();
+      final dt = DateTime.parse("${doc['currentDate']} ${doc['arrivedTime']}");
+      final diff = now.difference(dt);
+      final worked = "${diff.inHours}ц ${diff.inMinutes.remainder(60)}мин";
+
+      await FirebaseFirestore.instance.collection('attendance').doc(arrivedDocId!).update({
+        'leftTime': time,
+        'leftLatitude': pos.latitude,
+        'leftLongitude': pos.longitude,
+        'workedTime': worked,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Гарсан цаг амжилттай бүртгэгдлээ')),
-      );
+      setState(() {
+        hasArrived = false;
+        arrivedDocId = null;
+        showLocationMap = false;
+      });
+      _fetchAttendanceData();
+    } catch (e) {
+      _handleError(e.toString());
     }
+  }
+
+  void _updateAttendanceList(QuerySnapshot snapshot) {
+    attendanceList = snapshot.docs.map((doc) {
+      final d = doc.data() as Map<String, dynamic>;
+      return AttendanceEntry(
+        date: d['currentDate'],
+        arrivedTime: d['arrivedTime'],
+        latitude: d['latitude']?.toDouble(),
+        longitude: d['longitude']?.toDouble(),
+        leftLatitude: d['leftLatitude']?.toDouble(),
+        leftLongitude: d['leftLongitude']?.toDouble(),
+      )
+        ..leftTime = d['leftTime']
+        ..workedTime = d['workedTime'];
+    }).toList();
+    setState(() => isLoading = false);
+  }
+
+  void _handleError(String msg) {
+    setState(() => isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 }
