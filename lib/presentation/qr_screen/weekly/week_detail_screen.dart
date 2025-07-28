@@ -91,11 +91,41 @@ class WeekDetailScreen extends StatelessWidget {
 
   Map<DateTime, List<AttendanceEntry>> _groupEntriesByDay() {
     final Map<DateTime, List<AttendanceEntry>> grouped = {};
+
+    // Group attendance entries
     for (var entry in weekData.entries) {
       if (entry.dateTime == null) continue;
       final key = DateTime(entry.dateTime!.year, entry.dateTime!.month, entry.dateTime!.day);
       grouped.putIfAbsent(key, () => []).add(entry);
     }
+
+    // Group leave requests (merge with attendance if same day, else add as new)
+    for (var leave in weekData.leaveRequests) {
+      final leaveDate = DateTime.tryParse(leave.date);
+      if (leaveDate == null) continue;
+      final key = DateTime(leaveDate.year, leaveDate.month, leaveDate.day);
+      // If attendance exists that day, add leaveType to all entries
+      if (grouped.containsKey(key)) {
+        for (var entry in grouped[key]!) {
+          entry.leaveType = leave.reason;
+          entry.leaveTime = leave.date;
+        }
+      } else {
+        grouped[key] = [
+          AttendanceEntry(
+            date: leave.date,
+            arrivedTime: '',
+            latitude: null,
+            longitude: null,
+            leftLatitude: null,
+            leftLongitude: null,
+          )
+            ..leaveType = leave.reason
+            ..leaveTime = leave.date
+        ];
+      }
+    }
+
     return grouped;
   }
 
@@ -104,13 +134,15 @@ class WeekDetailScreen extends StatelessWidget {
     final dayName = dayNames[date.weekday - 1];
     final dateString = "${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}";
 
+    final hasLeave = entries.any((e) => e.leaveType != null && e.leaveTime != null);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Card(
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.blueAccent.shade100, width: 1),
+          side: BorderSide(color: hasLeave ? Colors.orange : Colors.blueAccent.shade100, width: 1),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -129,7 +161,7 @@ class WeekDetailScreen extends StatelessWidget {
                   ),
                   Chip(
                     label: Text('${entries.length} удаа'),
-                    backgroundColor: Colors.blue,
+                    backgroundColor: hasLeave ? Colors.orange : Colors.blue,
                     labelStyle: const TextStyle(color: Colors.white),
                   ),
                 ],
@@ -147,6 +179,14 @@ class WeekDetailScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (entry.leaveType != null && entry.leaveTime != null)
+          _buildAttendanceDetail(
+            'Чөлөө (${entry.leaveType})',
+            _getLeaveTimeRange(entry.leaveTime!),
+            Icons.free_breakfast,
+            isHighlight: true,
+            highlightColor: Colors.orange,
+          ),
         if (entry.arrivedTime.isNotEmpty && entry.latitude != null && entry.longitude != null)
           _buildAttendanceDetail(
             'Ирсэн цаг',
@@ -156,7 +196,7 @@ class WeekDetailScreen extends StatelessWidget {
           ),
         if (entry.leftTime != null && entry.leftLatitude != null && entry.leftLongitude != null)
           _buildAttendanceDetail(
-            'Явсан цаг', 
+            'Явсан цаг',
             entry.leftTime!,
             Icons.logout,
             location: LatLng(entry.leftLatitude!, entry.leftLongitude!),
@@ -174,10 +214,10 @@ class WeekDetailScreen extends StatelessWidget {
   }
 
   Widget _buildAttendanceDetail(String label, String value, IconData icon,
-      {bool isHighlight = false, LatLng? location}) {
+      {bool isHighlight = false, Color? highlightColor, LatLng? location}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: isHighlight ? Colors.green : Colors.grey[600]),
+        Icon(icon, size: 20, color: isHighlight ? (highlightColor ?? Colors.green) : Colors.grey[600]),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -188,7 +228,7 @@ class WeekDetailScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: isHighlight ? Colors.green : Colors.black,
+                  color: isHighlight ? (highlightColor ?? Colors.green) : Colors.black,
                 ),
               ),
               if (location != null)
@@ -201,5 +241,22 @@ class WeekDetailScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  String _getLeaveTimeRange(String leaveDate) {
+    // Find the leave request for this date
+    LeaveRequest? leave;
+    for (final l in weekData.leaveRequests) {
+      if (l.date == leaveDate) {
+        leave = l;
+        break;
+      }
+    }
+    if (leave == null) return '';
+    final start = leave.start;
+    final end = leave.end;
+    final startStr = "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}";
+    final endStr = "${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}";
+    return "${startStr} - ${endStr}";
   }
 }

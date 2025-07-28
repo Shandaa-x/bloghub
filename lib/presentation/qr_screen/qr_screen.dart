@@ -23,14 +23,20 @@ class AttendanceEntry {
   final double? longitude;
   final double? leftLatitude;
   final double? leftLongitude;
+  String? leaveTime;     // ✅ NEW
+  String? leaveType;     // ✅ NEW
 
   AttendanceEntry({
     required this.date,
     required this.arrivedTime,
+    this.leftTime,
+    this.workedTime,
     this.latitude,
     this.longitude,
     this.leftLatitude,
     this.leftLongitude,
+    this.leaveTime,           // ✅ NEW
+    this.leaveType,           // ✅ NEW
   });
 
   DateTime? get dateTime {
@@ -55,6 +61,36 @@ class AttendanceEntry {
     }
     return time;
   }
+
+  factory AttendanceEntry.fromJson(Map<String, dynamic> json) {
+    return AttendanceEntry(
+      date: json['date'] ?? '',
+      arrivedTime: json['arrived_time'] ?? '',
+      leftTime: json['left_time'],
+      workedTime: json['worked_time'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      leftLatitude: (json['left_latitude'] as num?)?.toDouble(),
+      leftLongitude: (json['left_longitude'] as num?)?.toDouble(),
+      leaveTime: json['leave_time'],        // ✅ NEW
+      leaveType: json['leave_type'],        // ✅ NEW
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date,
+      'arrived_time': arrivedTime,
+      'left_time': leftTime,
+      'worked_time': workedTime,
+      'latitude': latitude,
+      'longitude': longitude,
+      'left_latitude': leftLatitude,
+      'left_longitude': leftLongitude,
+      'leave_time': leaveTime,             // ✅ NEW
+      'leave_type': leaveType,             // ✅ NEW
+    };
+  }
 }
 
 class WeekData {
@@ -63,6 +99,7 @@ class WeekData {
   final List<AttendanceEntry> entries;
   final int totalMinutes;
   final int uniqueDaysWorked;
+  final List<LeaveRequest> leaveRequests; // ✅ new field
 
   WeekData({
     required this.startDate,
@@ -70,11 +107,38 @@ class WeekData {
     required this.entries,
     required this.totalMinutes,
     required this.uniqueDaysWorked,
+    this.leaveRequests = const [], // ✅ optional param
   });
 
-  String get weekTitle => "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - ${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+  String get weekTitle =>
+      "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - "
+          "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
 
-  String get totalWorkedTime => "${totalMinutes ~/ 60} цаг ${totalMinutes % 60} мин";
+  String get totalWorkedTime =>
+      "${totalMinutes ~/ 60} цаг ${totalMinutes % 60} мин";
+}
+
+class LeaveRequest {
+  final String date; // format: yyyy-MM-dd
+  final String reason;
+  final DateTime start; // leave start datetime
+  final DateTime end;   // leave end datetime
+
+  LeaveRequest({
+    required this.date,
+    required this.reason,
+    required this.start,
+    required this.end,
+  });
+
+  factory LeaveRequest.fromJson(Map<String, dynamic> json) {
+    return LeaveRequest(
+      date: json['date'],
+      reason: json['reason'] ?? 'Чөлөө',
+      start: (json['start'] is DateTime) ? json['start'] : (json['start'] as Timestamp).toDate(),
+      end: (json['end'] is DateTime) ? json['end'] : (json['end'] as Timestamp).toDate(),
+    );
+  }
 }
 
 class _QRScreenState extends State<QRScreen> {
@@ -85,6 +149,9 @@ class _QRScreenState extends State<QRScreen> {
   DateTime currentMonth = DateTime.now();
   bool showLocationMap = false;
   Position? currentPosition;
+
+  List<Map<String, dynamic>> leaveRequests = [];
+
 
   @override
   void initState() {
@@ -100,6 +167,8 @@ class _QRScreenState extends State<QRScreen> {
 
       final snapshot = await FirebaseFirestore.instance.collection('attendance').where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth)).where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth)).orderBy('createdAt', descending: true).get();
 
+      final leaveSnap = await FirebaseFirestore.instance.collection('leave_requests').get();
+      leaveRequests = leaveSnap.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
       _updateAttendanceList(snapshot);
     } catch (e) {
       _handleError('Ирцийн мэдээллийг ачааллахад алдаа гарлаа');
@@ -178,12 +247,25 @@ class _QRScreenState extends State<QRScreen> {
         }
       }
 
+      // Filter leave requests for this week
+      final weekLeaveRequests = leaveRequests.where((leave) {
+        final start = leave['start'] is DateTime ? leave['start'] : (leave['start'] as Timestamp).toDate();
+        final end = leave['end'] is DateTime ? leave['end'] : (leave['end'] as Timestamp).toDate();
+        return (start.isBefore(weekEnd.add(const Duration(days: 1))) && end.isAfter(weekStart.subtract(const Duration(days: 1))));
+      }).map((leave) => LeaveRequest(
+        date: (leave['start'] is DateTime ? leave['start'] : (leave['start'] as Timestamp).toDate()).toString().split(' ')[0],
+        reason: leave['type'] ?? 'Чөлөө',
+        start: leave['start'] is DateTime ? leave['start'] : (leave['start'] as Timestamp).toDate(),
+        end: leave['end'] is DateTime ? leave['end'] : (leave['end'] as Timestamp).toDate(),
+      )).toList();
+
       weeks.add(WeekData(
         startDate: weekStart,
         endDate: weekEnd,
         entries: entry.value,
         totalMinutes: totalMinutes,
         uniqueDaysWorked: uniqueDates.length,
+        leaveRequests: weekLeaveRequests,
       ));
     }
 
@@ -297,15 +379,28 @@ class _QRScreenState extends State<QRScreen> {
                 ),
               ],
             ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ElevatedButton(
-          onPressed: hasArrived ? _markLeft : _markArrived,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: hasArrived ? Colors.purple : Colors.green,
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => LeaveRequestDialog(onSubmit: _submitLeaveRequest),
+              );
+            },
+            child: const Text("Чөлөө авах"),
           ),
-          child: Text(hasArrived ? 'Явлаа' : 'Ирлээ', style: const TextStyle(color: Colors.white)),
-        ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: hasArrived ? _markLeft : _markArrived,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: hasArrived ? Colors.purple : Colors.green,
+            ),
+            child: Text(hasArrived ? 'Явлаа' : 'Ирлээ', style: const TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
@@ -332,6 +427,20 @@ class _QRScreenState extends State<QRScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _submitLeaveRequest(String type, DateTime start, DateTime end) async {
+    try {
+      await FirebaseFirestore.instance.collection('leave_requests').add({
+        'type': type,
+        'start': Timestamp.fromDate(start),
+        'end': Timestamp.fromDate(end),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Чөлөө илгээгдлээ")));
+    } catch (e) {
+      _handleError("Чөлөө илгээхэд алдаа гарлаа: $e");
+    }
   }
 
   void _changeMonth(int offset) {
@@ -408,11 +517,14 @@ class _QRScreenState extends State<QRScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => WeekDetailScreen(weekData: week),
-              )),
-          child: Padding(
+            context,
+            MaterialPageRoute(
+              builder: (_) => WeekDetailScreen(
+                weekData: week,
+              ),
+            ),
+          ),
+            child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -436,6 +548,111 @@ class _QRScreenState extends State<QRScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class LeaveRequestDialog extends StatefulWidget {
+  final Function(String, DateTime, DateTime) onSubmit;
+
+  const LeaveRequestDialog({required this.onSubmit, super.key});
+
+  @override
+  State<LeaveRequestDialog> createState() => _LeaveRequestDialogState();
+}
+
+class _LeaveRequestDialogState extends State<LeaveRequestDialog> {
+  String selectedType = 'Чөлөө';
+  DateTime? startDateTime;
+  DateTime? endDateTime;
+
+  Future<void> _pickDateTime({required bool isStart}) async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2023),
+      lastDate: DateTime(2100),
+    );
+    if (pickedDate == null) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (pickedTime == null) return;
+
+    final fullDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
+      if (isStart) {
+        startDateTime = fullDateTime;
+      } else {
+        endDateTime = fullDateTime;
+      }
+    });
+  }
+
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) return '';
+    final date = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+    final time = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    return "$date $time";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Чөлөөний хүсэлт"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButton<String>(
+            value: selectedType,
+            items: ['Чөлөө', 'Өвчтэй'].map((type) {
+              return DropdownMenuItem(value: type, child: Text(type));
+            }).toList(),
+            onChanged: (val) => setState(() => selectedType = val!),
+          ),
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () => _pickDateTime(isStart: true),
+            child: Text(startDateTime == null
+                ? "Эхлэх огноо + цаг"
+                : "Эхлэх: ${_formatDateTime(startDateTime)}"),
+          ),
+          ElevatedButton(
+            onPressed: () => _pickDateTime(isStart: false),
+            child: Text(endDateTime == null
+                ? "Дуусах огноо + цаг"
+                : "Дуусах: ${_formatDateTime(endDateTime)}"),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Болих"),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (startDateTime != null && endDateTime != null) {
+              widget.onSubmit(selectedType, startDateTime!, endDateTime!);
+              Navigator.pop(context);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Огноо болон цагийг бүрэн сонгоно уу")),
+              );
+            }
+          },
+          child: const Text("Илгээх"),
+        ),
+      ],
     );
   }
 }
