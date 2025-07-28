@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:bloghub/presentation/qr_screen/qr_scanner_screen.dart';
 import 'package:bloghub/presentation/qr_screen/weekly/week_detail_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class QRScreen extends StatefulWidget {
@@ -36,12 +36,11 @@ class AttendanceEntry {
   DateTime? get dateTime {
     try {
       return DateTime.parse("$date $arrivedTime");
-    } catch (e) {
-      // fallback: try to fix single-digit seconds
+    } catch (_) {
       final fixedTime = _fixTimeFormat(arrivedTime);
       try {
         return DateTime.parse("$date $fixedTime");
-      } catch (e) {
+      } catch (_) {
         return null;
       }
     }
@@ -73,15 +72,11 @@ class WeekData {
     required this.uniqueDaysWorked,
   });
 
-  String get weekTitle {
-    return "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - ${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
-  }
+  String get weekTitle =>
+      "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - ${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
 
-  String get totalWorkedTime {
-    final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
-    return "$hours цаг $minutes мин";
-  }
+  String get totalWorkedTime =>
+      "${totalMinutes ~/ 60} цаг ${totalMinutes % 60} мин";
 }
 
 class _QRScreenState extends State<QRScreen> {
@@ -118,6 +113,23 @@ class _QRScreenState extends State<QRScreen> {
     }
   }
 
+  void _updateAttendanceList(QuerySnapshot snapshot) {
+    attendanceList = snapshot.docs.map((doc) {
+      final d = doc.data() as Map<String, dynamic>;
+      return AttendanceEntry(
+        date: d['currentDate'],
+        arrivedTime: d['arrivedTime'],
+        latitude: d['latitude']?.toDouble(),
+        longitude: d['longitude']?.toDouble(),
+        leftLatitude: d['leftLatitude']?.toDouble(),
+        leftLongitude: d['leftLongitude']?.toDouble(),
+      )
+        ..leftTime = d['leftTime']
+        ..workedTime = d['workedTime'];
+    }).toList();
+    setState(() => isLoading = false);
+  }
+
   int parseWorkedTimeToMinutes(String workedTime) {
     final regex = RegExp(r"(\d+)ц\s+(\d+)мин");
     final match = regex.firstMatch(workedTime);
@@ -136,13 +148,10 @@ class _QRScreenState extends State<QRScreen> {
         totalMinutes += parseWorkedTimeToMinutes(e.workedTime!);
       }
     }
-    final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
-    return "$hours цаг $minutes мин";
+    return "${totalMinutes ~/ 60} цаг ${totalMinutes % 60} мин";
   }
 
   int getWorkedDaysCount() {
-    // Count unique dates (worked days), not total entries
     final uniqueDates = <String>{};
     for (var entry in attendanceList) {
       uniqueDates.add(entry.date);
@@ -157,29 +166,22 @@ class _QRScreenState extends State<QRScreen> {
     for (final entry in attendanceList) {
       final date = entry.dateTime;
       if (date != null) {
-        // Get the start of the week (Monday)
         final weekStart = date.subtract(Duration(days: date.weekday - 1));
-        final weekStartFormatted = "${weekStart.year}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}";
-
-        weekGroups.putIfAbsent(weekStartFormatted, () => []).add(entry);
+        final key = "${weekStart.year}-${weekStart.month.toString().padLeft(2, '0')}-${weekStart.day.toString().padLeft(2, '0')}";
+        weekGroups.putIfAbsent(key, () => []).add(entry);
       }
     }
 
-    // Convert to WeekData objects
     for (final entry in weekGroups.entries) {
       final weekStart = DateTime.parse(entry.key);
       final weekEnd = weekStart.add(const Duration(days: 6));
-
       int totalMinutes = 0;
-      final uniqueDatesInWeek = <String>{};
+      final uniqueDates = <String>{};
 
-      for (final attendance in entry.value) {
-        // Count unique dates for worked days
-        uniqueDatesInWeek.add(attendance.date);
-
-        // Sum worked time
-        if (attendance.workedTime != null) {
-          totalMinutes += parseWorkedTimeToMinutes(attendance.workedTime!);
+      for (final att in entry.value) {
+        uniqueDates.add(att.date);
+        if (att.workedTime != null) {
+          totalMinutes += parseWorkedTimeToMinutes(att.workedTime!);
         }
       }
 
@@ -188,215 +190,26 @@ class _QRScreenState extends State<QRScreen> {
         endDate: weekEnd,
         entries: entry.value,
         totalMinutes: totalMinutes,
-        uniqueDaysWorked: uniqueDatesInWeek.length, // Add this field
+        uniqueDaysWorked: uniqueDates.length,
       ));
     }
 
-    // Sort weeks by start date (most recent first)
     weeks.sort((a, b) => b.startDate.compareTo(a.startDate));
     return weeks;
   }
 
-  void _changeMonth(int monthOffset) {
-    final newMonth = DateTime(currentMonth.year, currentMonth.month + monthOffset, 1);
-
-    // Don't allow future months
-    final now = DateTime.now();
-    if (newMonth.isAfter(DateTime(now.year, now.month, 1))) {
-      return;
-    }
-
-    setState(() {
-      currentMonth = newMonth;
-    });
-    _fetchAttendanceData();
-  }
-
-  String get monthTitle {
-    final monthNames = [
-      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-    ];
-    return "${monthNames[currentMonth.month - 1]} ${currentMonth.year}";
-  }
-
-  bool get canGoPreviousMonth {
-    // Check if there's attendance data in the previous month
-    // For now, just allow going back 12 months
-    final twelveMonthsAgo = DateTime.now().subtract(const Duration(days: 365));
-    return currentMonth.isAfter(twelveMonthsAgo);
-  }
-
   Future<Position> _getLocation() async {
     if (!await Geolocator.isLocationServiceEnabled()) throw Exception("GPS is disabled.");
-
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
       permission = await Geolocator.requestPermission();
     }
-    if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) {
-      throw Exception("Location permission not granted.");
-    }
-
+    if (permission == LocationPermission.denied) throw Exception("Location permission not granted.");
     return Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final weeks = _groupByWeeks();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ирц бүртгэл', style: TextStyle(color: Colors.white)),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-        children: [
-          // Month navigation
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: canGoPreviousMonth ? () => _changeMonth(-1) : null,
-                  icon: const Icon(Icons.chevron_left),
-                ),
-                Text(
-                  monthTitle,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  onPressed: currentMonth.month < DateTime.now().month || currentMonth.year < DateTime.now().year
-                      ? () => _changeMonth(1)
-                      : null,
-                  icon: const Icon(Icons.chevron_right),
-                ),
-              ],
-            ),
-          ),
-
-          // Monthly summary
-          _buildMonthlySummary(),
-
-          // Weeks list
-          Expanded(
-            child: attendanceList.isEmpty
-                ? const Center(child: Text('Энэ сард ирц байхгүй байна'))
-                : RefreshIndicator(
-              onRefresh: _fetchAttendanceData,
-              child: ListView.builder(
-                itemCount: weeks.length,
-                itemBuilder: (context, index) {
-                  return _buildWeekCard(weeks[index]);
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ElevatedButton(
-          onPressed: hasArrived ? _markLeft : _markArrived,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: hasArrived ? Colors.purple : Colors.green,
-          ),
-          child: Text(hasArrived ? 'Явлаа' : 'Ирлээ', style: const TextStyle(color: Colors.white)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMonthlySummary() {
-    final total = getMonthlyTotalWorkedTime();
-    final daysWorked = getWorkedDaysCount();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Сарын нийт ажилласан цаг:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  Text(total, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Ажилласан өдөр:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  Text('$daysWorked өдөр', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeekCard(WeekData week) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WeekDetailScreen(weekData: week),
-              ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  week.weekTitle,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Ажилласан өдөр: ${week.uniqueDaysWorked}',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    Text(
-                      week.totalWorkedTime,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: const [
-                    Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+  String _formatTime(DateTime dt) {
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}";
   }
 
   Future<void> _markArrived() async {
@@ -427,13 +240,8 @@ class _QRScreenState extends State<QRScreen> {
     }
   }
 
-  String _formatTime(DateTime dt) {
-    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}";
-  }
-
   Future<void> _markLeft() async {
     if (arrivedDocId == null) return;
-
     try {
       final pos = await _getLocation();
       final now = DateTime.now();
@@ -462,25 +270,180 @@ class _QRScreenState extends State<QRScreen> {
     }
   }
 
-  void _updateAttendanceList(QuerySnapshot snapshot) {
-    attendanceList = snapshot.docs.map((doc) {
-      final d = doc.data() as Map<String, dynamic>;
-      return AttendanceEntry(
-        date: d['currentDate'],
-        arrivedTime: d['arrivedTime'],
-        latitude: d['latitude']?.toDouble(),
-        longitude: d['longitude']?.toDouble(),
-        leftLatitude: d['leftLatitude']?.toDouble(),
-        leftLongitude: d['leftLongitude']?.toDouble(),
-      )
-        ..leftTime = d['leftTime']
-        ..workedTime = d['workedTime'];
-    }).toList();
-    setState(() => isLoading = false);
-  }
-
   void _handleError(String msg) {
     setState(() => isLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final weeks = _groupByWeeks();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ирц бүртгэл', style: TextStyle(color: Colors.white)),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+        children: [
+          _buildMonthNavigation(),
+          _buildMonthlySummary(),
+          if (showLocationMap && currentPosition != null) _buildMapView(),
+          Expanded(
+            child: attendanceList.isEmpty
+                ? const Center(child: Text('Энэ сард ирц байхгүй байна'))
+                : RefreshIndicator(
+              onRefresh: _fetchAttendanceData,
+              child: ListView.builder(
+                itemCount: weeks.length,
+                itemBuilder: (context, index) => _buildWeekCard(weeks[index]),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(12),
+        child: ElevatedButton(
+          onPressed: hasArrived ? _markLeft : _markArrived,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: hasArrived ? Colors.purple : Colors.green,
+          ),
+          child: Text(hasArrived ? 'Явлаа' : 'Ирлээ', style: const TextStyle(color: Colors.white)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthNavigation() {
+    final monthNames = [
+      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ];
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: () => _changeMonth(-1),
+            icon: const Icon(Icons.chevron_left),
+          ),
+          Text(
+            "${monthNames[currentMonth.month - 1]} ${currentMonth.year}",
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            onPressed: currentMonth.month < DateTime.now().month ? () => _changeMonth(1) : null,
+            icon: const Icon(Icons.chevron_right),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _changeMonth(int offset) {
+    final newMonth = DateTime(currentMonth.year, currentMonth.month + offset, 1);
+    if (newMonth.isAfter(DateTime.now())) return;
+    setState(() => currentMonth = newMonth);
+    _fetchAttendanceData();
+  }
+
+  Widget _buildMonthlySummary() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Сарын нийт ажилласан цаг:', style: TextStyle(fontSize: 13)),
+                  Text(getMonthlyTotalWorkedTime(), style: const TextStyle(color: Colors.green)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Ажилласан өдөр:', style: TextStyle(fontSize: 13)),
+                  Text('${getWorkedDaysCount()} өдөр', style: const TextStyle(color: Colors.blue)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapView() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: SizedBox(
+        height: 200,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: LatLng(currentPosition!.latitude, currentPosition!.longitude),
+              zoom: 15,
+            ),
+            markers: {
+              Marker(
+                markerId: const MarkerId("current"),
+                position: LatLng(currentPosition!.latitude, currentPosition!.longitude),
+                infoWindow: const InfoWindow(title: "Миний байршил"),
+              ),
+            },
+            zoomControlsEnabled: false,
+            liteModeEnabled: true,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekCard(WeekData week) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => Navigator.push(context, MaterialPageRoute(
+            builder: (_) => WeekDetailScreen(weekData: week),
+          )),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(week.weekTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Ажилласан өдөр: ${week.uniqueDaysWorked}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                    Text(week.totalWorkedTime, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: const [Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey)],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
