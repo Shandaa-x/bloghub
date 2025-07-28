@@ -72,11 +72,9 @@ class WeekData {
     required this.uniqueDaysWorked,
   });
 
-  String get weekTitle =>
-      "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - ${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
+  String get weekTitle => "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')} - ${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}";
 
-  String get totalWorkedTime =>
-      "${totalMinutes ~/ 60} цаг ${totalMinutes % 60} мин";
+  String get totalWorkedTime => "${totalMinutes ~/ 60} цаг ${totalMinutes % 60} мин";
 }
 
 class _QRScreenState extends State<QRScreen> {
@@ -100,12 +98,7 @@ class _QRScreenState extends State<QRScreen> {
       final startOfMonth = DateTime(currentMonth.year, currentMonth.month, 1);
       final endOfMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0, 23, 59, 59);
 
-      final snapshot = await FirebaseFirestore.instance
-          .collection('attendance')
-          .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
-          .where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
-          .orderBy('createdAt', descending: true)
-          .get();
+      final snapshot = await FirebaseFirestore.instance.collection('attendance').where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth)).where('createdAt', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth)).orderBy('createdAt', descending: true).get();
 
       _updateAttendanceList(snapshot);
     } catch (e) {
@@ -287,23 +280,23 @@ class _QRScreenState extends State<QRScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
-        children: [
-          _buildMonthNavigation(),
-          _buildMonthlySummary(),
-          if (showLocationMap && currentPosition != null) _buildMapView(),
-          Expanded(
-            child: attendanceList.isEmpty
-                ? const Center(child: Text('Энэ сард ирц байхгүй байна'))
-                : RefreshIndicator(
-              onRefresh: _fetchAttendanceData,
-              child: ListView.builder(
-                itemCount: weeks.length,
-                itemBuilder: (context, index) => _buildWeekCard(weeks[index]),
-              ),
+              children: [
+                _buildMonthNavigation(),
+                _buildMonthlySummary(),
+                if (showLocationMap && currentPosition != null) _buildMapView(),
+                Expanded(
+                  child: attendanceList.isEmpty
+                      ? const Center(child: Text('Энэ сард ирц байхгүй байна'))
+                      : RefreshIndicator(
+                          onRefresh: _fetchAttendanceData,
+                          child: ListView.builder(
+                            itemCount: weeks.length,
+                            itemBuilder: (context, index) => _buildWeekCard(weeks[index]),
+                          ),
+                        ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(12),
         child: ElevatedButton(
@@ -318,10 +311,7 @@ class _QRScreenState extends State<QRScreen> {
   }
 
   Widget _buildMonthNavigation() {
-    final monthNames = [
-      'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-    ];
+    final monthNames = ['1-р сар', '2-р сар', '3-р сар', '4-р сар', '5-р сар', '6-р сар', '7-р сар', '8-р сар', '9-р сар', '10-р сар', '11-р сар', '12-р сар'];
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -365,7 +355,7 @@ class _QRScreenState extends State<QRScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Сарын нийт ажилласан цаг:', style: TextStyle(fontSize: 13)),
-                  Text(getMonthlyTotalWorkedTime(), style: const TextStyle(color: Colors.green)),
+                  Text(getMonthlyTotalWorkedTime(), style: const TextStyle(color: Colors.green, fontSize: 13)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -373,7 +363,7 @@ class _QRScreenState extends State<QRScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Ажилласан өдөр:', style: TextStyle(fontSize: 13)),
-                  Text('${getWorkedDaysCount()} өдөр', style: const TextStyle(color: Colors.blue)),
+                  Text('${getWorkedDaysCount()} өдөр', style: const TextStyle(color: Colors.blue, fontSize: 13)),
                 ],
               ),
             ],
@@ -385,7 +375,7 @@ class _QRScreenState extends State<QRScreen> {
 
   Widget _buildMapView() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
       child: SizedBox(
         height: 200,
         child: ClipRRect(
@@ -417,21 +407,23 @@ class _QRScreenState extends State<QRScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.push(context, MaterialPageRoute(
-            builder: (_) => WeekDetailScreen(weekData: week),
-          )),
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WeekDetailScreen(weekData: week),
+              )),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(week.weekTitle, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(week.weekTitle, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Ажилласан өдөр: ${week.uniqueDaysWorked}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                    Text(week.totalWorkedTime, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text('Ажилласан өдөр: ${week.uniqueDaysWorked}', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                    Text(week.totalWorkedTime, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.green)),
                   ],
                 ),
                 const SizedBox(height: 4),
